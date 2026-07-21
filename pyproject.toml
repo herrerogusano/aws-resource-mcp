@@ -3,8 +3,19 @@ name = "aws-resource-mcp"
 version = "0.1.0"
 description = "Servidor MCP local para consultar recursos de AWS en modo lectura."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+    "boto3>=1.43.52",
+    "mcp[cli]>=1.27,<2",
+]
+
+[project.scripts]
+aws-resource-mcp = "aws_resource_mcp.server:main"
 
 [build-system]
 requires = ["uv_build>=0.11.7,<0.12.0"]
 build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
