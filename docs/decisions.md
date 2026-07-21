@@ -77,3 +77,21 @@
 **Decisión:** usar diccionarios tipados y normalización ISO 8601, sin añadir otra librería de modelos.
 
 **Motivo:** el inventario es pequeño, serializable y fácil de integrar posteriormente como respuesta MCP.
+
+## D-014 — Tool MCP como capa de presentación
+
+**Decisión:** `listar_recursos_aws` valida parámetros, llama al agregador existente y adapta su salida, sin contener llamadas Boto3.
+
+**Motivo:** mantiene separadas las responsabilidades del protocolo MCP y del acceso a AWS.
+
+## D-015 — Filtrado antes de consultar servicios
+
+**Decisión:** el agregador admite seleccionar `lambda` y `s3`, evitando consultar servicios no solicitados. STS sigue identificando la cuenta.
+
+**Motivo:** reduce llamadas, permisos necesarios y errores irrelevantes para la petición concreta.
+
+## D-016 — Respuestas completas, parciales y globales
+
+**Decisión:** devolver `ok`, `partial` o `error`, con resumen, recursos y errores normalizados. El ID de cuenta puede omitirse con `include_account_id=false`.
+
+**Motivo:** facilita la interpretación por clientes MCP y permite anonimizar la identidad sin alterar el inventario.

@@ -48,6 +48,22 @@ def test_partial_service_failure_preserves_other_data(
     assert result["errors"][0]["error_type"] == "access_denied"
 
 
+@patch("aws_resource_mcp.aws.inventory.list_s3_buckets")
+@patch("aws_resource_mcp.aws.inventory.list_lambda_functions")
+@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
+def test_requested_services_avoid_unneeded_queries(
+    identity: Mock, lambdas: Mock, buckets: Mock
+) -> None:
+    identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
+    lambdas.return_value = [{"name": "function"}]
+
+    result = collect_aws_inventory(session=Mock(), services=["lambda"])
+
+    assert result["services"] == {"lambda": [{"name": "function"}]}
+    lambdas.assert_called_once()
+    buckets.assert_not_called()
+
+
 @patch("aws_resource_mcp.aws.inventory.get_aws_identity", side_effect=NoCredentialsError())
 def test_missing_credentials_are_a_global_error(identity: Mock) -> None:
     with pytest.raises(AWSInventoryGlobalError) as raised:

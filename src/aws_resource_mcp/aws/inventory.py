@@ -2,6 +2,7 @@
 
 import argparse
 import json
+from collections.abc import Collection
 from typing import Any
 
 from aws_resource_mcp.aws.errors import (
@@ -15,14 +16,25 @@ from aws_resource_mcp.aws.session import create_aws_session
 from aws_resource_mcp.config import AWSConfig, DEFAULT_AWS_REGION
 from aws_resource_mcp.models import InventoryError
 
+SUPPORTED_INVENTORY_SERVICES = frozenset({"lambda", "s3"})
+
 
 def collect_aws_inventory(
     region: str = DEFAULT_AWS_REGION,
     profile_name: str | None = None,
     *,
     session: Any | None = None,
+    services: Collection[str] | None = None,
 ) -> dict[str, Any]:
     """Collect identity, Lambda and S3 data into a JSON-compatible inventory."""
+    requested_services = (
+        SUPPORTED_INVENTORY_SERVICES if services is None else frozenset(services)
+    )
+    unknown_services = requested_services - SUPPORTED_INVENTORY_SERVICES
+    if unknown_services:
+        unknown = ", ".join(sorted(unknown_services))
+        raise ValueError(f"Unsupported inventory services: {unknown}")
+
     try:
         aws_session = session or create_aws_session(region, profile_name)
         account = get_aws_identity(aws_session)
@@ -30,23 +42,27 @@ def collect_aws_inventory(
         raise AWSInventoryGlobalError(describe_aws_error("sts", error)) from None
 
     errors: list[InventoryError] = []
-    services: dict[str, list[dict[str, Any]]] = {"lambda": [], "s3": []}
+    service_results: dict[str, list[dict[str, Any]]] = {
+        service: [] for service in sorted(requested_services)
+    }
 
-    try:
-        services["lambda"] = list_lambda_functions(aws_session, region)
-    except Exception as error:
-        errors.append(describe_aws_error("lambda", error))
+    if "lambda" in requested_services:
+        try:
+            service_results["lambda"] = list_lambda_functions(aws_session, region)
+        except Exception as error:
+            errors.append(describe_aws_error("lambda", error))
 
-    try:
-        services["s3"], s3_errors = list_s3_buckets(aws_session)
-        errors.extend(s3_errors)
-    except Exception as error:
-        errors.append(describe_aws_error("s3", error))
+    if "s3" in requested_services:
+        try:
+            service_results["s3"], s3_errors = list_s3_buckets(aws_session)
+            errors.extend(s3_errors)
+        except Exception as error:
+            errors.append(describe_aws_error("s3", error))
 
     return {
         "account": account,
         "region": region,
-        "services": services,
+        "services": service_results,
         "errors": errors,
     }
 

@@ -1,6 +1,6 @@
 # Arquitectura
 
-## Estado en la Fase 2
+## Estado en la Fase 3
 
 El proyecto es un servidor MCP local escrito en Python. Un cliente MCP lo inicia como proceso local y se comunica con él mediante transporte `stdio`.
 
@@ -8,23 +8,16 @@ El proyecto es un servidor MCP local escrito en Python. Un cliente MCP lo inicia
 Cliente MCP
     ↓ stdio
 FastMCP server
-    ↓
-health_check
+    ├── health_check
+    └── listar_recursos_aws
+            ↓
+        AWS inventory
+            ├── STS
+            ├── Lambda
+            └── S3
 ```
 
-FastMCP crea el servidor, registra la tool y gestiona el protocolo MCP. La lógica de `health_check` vive en un módulo separado para que pueda probarse sin iniciar el transporte.
-
-```text
-Servidor MCP
-    └── health_check
-
-Diagnóstico local
-    ↓
-Capa de inventario
-    ├── STS
-    ├── Lambda
-    └── S3
-```
+FastMCP crea el servidor, registra las tools y gestiona el protocolo MCP. Cada tool mantiene su lógica de entrada y presentación separada de `server.py`.
 
 La capa AWS es independiente del servidor MCP. `config.py` resuelve región y perfil sin leer secretos; `aws/session.py` crea sesiones Boto3 sin clientes globales; cada servicio tiene un módulo propio; `aws/inventory.py` agrega y serializa el resultado.
 
@@ -34,9 +27,11 @@ STS identifica la cuenta efectiva antes de consultar recursos. Lambda usa el pag
 
 Los errores de sesión o identidad son globales. Los fallos posteriores de Lambda o S3 son parciales y se devuelven en `errors` sin descartar los datos disponibles.
 
+`listar_recursos_aws` valida región y servicios, solicita únicamente los inventarios seleccionados, transforma errores internos en respuestas seguras y genera un resumen. El diagnóstico Python directo continúa reutilizando el mismo agregador.
+
 ## Límites actuales
 
-No se implementan todavía las tools MCP de las fases 3 y 4, políticas IAM definitivas ni transportes HTTP, SSE o Streamable HTTP. La capa AWS solo realiza las consultas de lectura previstas y no accede al contenido de recursos.
+No se implementan todavía `revisar_free_tier`, políticas IAM definitivas ni transportes HTTP, SSE o Streamable HTTP. La capa AWS solo realiza las consultas de lectura previstas y no accede al contenido de recursos.
 
 ## Principios
 

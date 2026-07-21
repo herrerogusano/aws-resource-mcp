@@ -3,9 +3,11 @@
 from mcp.server.fastmcp import FastMCP
 
 from aws_resource_mcp.tools.health import health_check
+from aws_resource_mcp.tools.list_resources import listar_recursos_aws
 
 mcp = FastMCP("aws-resource-mcp")
 mcp.tool()(health_check)
+mcp.tool()(listar_recursos_aws)
 
 
 def main() -> None:
