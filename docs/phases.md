@@ -38,4 +38,4 @@ Configurar CI para ejecutar lint y tests en cada pull request.
 
 ## Fase 9 — README, demo y cierre
 
-Completar la documentación, preparar una demo reproducible y cerrar el ejercicio de portfolio.
+Completar la documentación, preparar una demo reproducible y cerrar la primera versión del proyecto.
