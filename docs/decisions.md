@@ -10,19 +10,19 @@
 
 **Decisión:** el servidor MCP se ejecutará localmente mediante transporte `stdio`.
 
-**Motivo:** el ejercicio no necesita despliegue ni infraestructura remota.
+**Motivo:** el servidor está diseñado para ejecutarse como proceso local y no necesita infraestructura remota.
 
 ## D-003 — AWS de solo lectura
 
 **Decisión:** cualquier integración futura con AWS será exclusivamente de lectura y con permisos de mínimo privilegio.
 
-**Motivo:** protege la cuenta y limita el alcance del ejercicio.
+**Motivo:** protege la cuenta y limita el alcance operativo del proyecto.
 
 ## D-004 — Alcance funcional previsto
 
 **Decisión:** las tools objetivo serán `listar_recursos_aws()` y `revisar_free_tier()`; no se utilizará Cost Explorer.
 
-**Motivo:** mantiene un alcance pequeño, útil y compatible con el objetivo del portfolio.
+**Motivo:** mantiene un alcance inicial pequeño, útil y fácil de validar.
 
 ## D-005 — Calidad sin CD
 
@@ -40,7 +40,7 @@
 
 **Decisión:** restringir temporalmente la dependencia a `mcp[cli]>=1.27,<2`.
 
-**Motivo:** evita versiones preliminares y cambios incompatibles de una futura versión principal mientras se completa el ejercicio.
+**Motivo:** evita versiones preliminares y cambios incompatibles de una futura versión principal mientras el proyecto evoluciona.
 
 ## D-008 — Separación entre servidor y tools
 
