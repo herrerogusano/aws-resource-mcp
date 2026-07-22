@@ -3,73 +3,32 @@
 import json
 from unittest.mock import Mock, patch
 
-from botocore.exceptions import ClientError, NoCredentialsError
+from botocore.exceptions import ClientError
 import pytest
 
 from aws_resource_mcp.aws.errors import AWSInventoryGlobalError
-from aws_resource_mcp.aws.inventory import collect_aws_inventory, main
+from aws_resource_mcp.aws.inventory import (
+    collect_aws_inventory,
+    collect_general_aws_inventory,
+    main,
+)
 
 
-@patch("aws_resource_mcp.aws.inventory.list_s3_buckets")
-@patch("aws_resource_mcp.aws.inventory.list_lambda_functions")
-@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
-def test_complete_inventory_is_json_serializable(
-    identity: Mock, lambdas: Mock, buckets: Mock
-) -> None:
-    identity.return_value = {"account_id": "111122223333", "arn": "example", "user_id": "id"}
-    lambdas.return_value = [{"name": "function"}]
-    buckets.return_value = ([{"name": "bucket"}], [])
+@patch("aws_resource_mcp.aws.inventory.collect_general_aws_inventory")
+def test_diagnostic_inventory_uses_the_uniform_collector(collect: Mock) -> None:
+    collect.return_value = {"resources": [], "services": {}, "errors": []}
 
-    result = collect_aws_inventory(session=Mock())
-    serialized = json.dumps(result)
-    assert '"region": "eu-west-1"' in serialized
-    assert result["services"]["lambda"] == [{"name": "function"}]
-    assert result["services"]["s3"] == [{"name": "bucket"}]
-    assert result["errors"] == []
-
-
-@patch("aws_resource_mcp.aws.inventory.list_s3_buckets")
-@patch("aws_resource_mcp.aws.inventory.list_lambda_functions")
-@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
-def test_partial_service_failure_preserves_other_data(
-    identity: Mock, lambdas: Mock, buckets: Mock
-) -> None:
-    identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
-    lambdas.side_effect = ClientError(
-        {"Error": {"Code": "AccessDeniedException", "Message": "denied"}},
-        "ListFunctions",
+    result = collect_aws_inventory(
+        region="eu-west-1",
+        profile_name="example",
+        session=Mock(),
+        services=["ec2"],
     )
-    buckets.return_value = ([{"name": "visible"}], [])
 
-    result = collect_aws_inventory(session=Mock())
-    assert result["services"]["lambda"] == []
-    assert result["services"]["s3"] == [{"name": "visible"}]
-    assert result["errors"][0]["service"] == "lambda"
-    assert result["errors"][0]["error_type"] == "access_denied"
-
-
-@patch("aws_resource_mcp.aws.inventory.list_s3_buckets")
-@patch("aws_resource_mcp.aws.inventory.list_lambda_functions")
-@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
-def test_requested_services_avoid_unneeded_queries(
-    identity: Mock, lambdas: Mock, buckets: Mock
-) -> None:
-    identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
-    lambdas.return_value = [{"name": "function"}]
-
-    result = collect_aws_inventory(session=Mock(), services=["lambda"])
-
-    assert result["services"] == {"lambda": [{"name": "function"}]}
-    lambdas.assert_called_once()
-    buckets.assert_not_called()
-
-
-@patch("aws_resource_mcp.aws.inventory.get_aws_identity", side_effect=NoCredentialsError())
-def test_missing_credentials_are_a_global_error(identity: Mock) -> None:
-    with pytest.raises(AWSInventoryGlobalError) as raised:
-        collect_aws_inventory(session=Mock())
-    assert raised.value.error["service"] == "sts"
-    assert raised.value.error["error_type"] == "credentials_not_found"
+    assert json.dumps(result)
+    collect.assert_called_once()
+    assert collect.call_args.kwargs["services"] == ["ec2"]
+    assert collect.call_args.kwargs["all_regions"] is False
 
 
 @patch("aws_resource_mcp.aws.inventory.collect_aws_inventory")
@@ -108,3 +67,117 @@ def test_inventory_source_does_not_expose_credential_fields() -> None:
     assert "access_key" not in serialized
     assert "secret_key" not in serialized
     assert "session_token" not in serialized
+
+
+@patch("aws_resource_mcp.aws.inventory.discover_with_resource_explorer")
+@patch("aws_resource_mcp.aws.inventory.list_aws_regions")
+@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
+def test_general_inventory_scans_enabled_regions_and_deduplicates(
+    identity: Mock,
+    regions: Mock,
+    explorer: Mock,
+) -> None:
+    identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
+    regions.return_value = [
+        {"name": "eu-central-1", "enabled": True},
+        {"name": "eu-west-1", "enabled": True},
+        {"name": "us-west-1", "enabled": False},
+    ]
+    lambda_arn = "arn:aws:lambda:eu-west-1:account:function:function"
+    resource = {
+        "arn": lambda_arn,
+        "service": "lambda",
+        "resource_type": "lambda:function",
+        "region": "eu-west-1",
+        "name": "function",
+        "sources": ["resource_explorer"],
+        "properties": {},
+    }
+    explorer.return_value = {
+        "resources": [
+            resource,
+            resource.copy(),
+        ],
+        "coverage": {
+            "available": True,
+            "aggregator_index": True,
+            "regions_indexed": ["eu-west-1"],
+            "supported_resource_type_count": 1,
+            "services_recognized": ["lambda"],
+            "permission_errors": [],
+            "limitations": [],
+        },
+        "errors": [],
+    }
+    result = collect_general_aws_inventory(session=Mock())
+
+    assert len(result["resources"]) == 1
+    assert result["services"] == {"lambda": result["resources"]}
+    assert result["resources"][0]["sources"] == ["resource_explorer"]
+    assert result["coverage"]["status"] == "complete_for_supported_resources"
+
+
+@patch("aws_resource_mcp.aws.inventory.discover_with_resource_explorer")
+@patch("aws_resource_mcp.aws.inventory.list_aws_regions")
+@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
+def test_general_inventory_filters_service_and_region(
+    identity: Mock,
+    regions: Mock,
+    explorer: Mock,
+) -> None:
+    identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
+    regions.return_value = [{"name": "eu-west-1", "enabled": True}]
+    explorer.return_value = {
+        "resources": [],
+        "coverage": {
+            "available": True,
+            "aggregator_index": False,
+            "regions_indexed": ["eu-west-1"],
+            "permission_errors": [],
+            "limitations": ["local only"],
+        },
+        "errors": [],
+    }
+    result = collect_general_aws_inventory(
+        region="eu-west-1",
+        services=["lambda"],
+        all_regions=True,
+        session=Mock(),
+    )
+
+    assert explorer.call_args.kwargs["services"] == ["lambda"]
+    assert explorer.call_args.kwargs["region_filter"] == "eu-west-1"
+    assert result["coverage"]["regions_scanned"] == ["eu-west-1"]
+    assert result["coverage"]["status"] == "partial"
+
+
+@patch("aws_resource_mcp.aws.inventory.discover_with_resource_explorer")
+@patch("aws_resource_mcp.aws.inventory.list_aws_regions")
+@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
+def test_general_inventory_region_failure_reports_unavailable_coverage(
+    identity: Mock,
+    regions: Mock,
+    explorer: Mock,
+) -> None:
+    identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
+    regions.side_effect = ClientError(
+        {"Error": {"Code": "AccessDenied", "Message": "denied"}},
+        "DescribeRegions",
+    )
+    explorer.return_value = {
+        "resources": [],
+        "coverage": {
+            "available": False,
+            "aggregator_index": False,
+            "regions_indexed": [],
+            "permission_errors": [],
+            "limitations": ["not configured"],
+        },
+        "errors": [],
+    }
+    result = collect_general_aws_inventory(session=Mock())
+
+    assert result["services"] == {}
+    assert result["resources"] == []
+    assert result["coverage"]["status"] == "unavailable"
+    assert any(error["service"] == "ec2" for error in result["errors"])

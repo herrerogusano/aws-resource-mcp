@@ -1,12 +1,10 @@
 """MCP presentation layer for the read-only AWS inventory."""
 
+import re
 from typing import Any
 
 from aws_resource_mcp.aws.errors import AWSInventoryGlobalError
-from aws_resource_mcp.aws.inventory import (
-    SUPPORTED_INVENTORY_SERVICES,
-    collect_aws_inventory,
-)
+from aws_resource_mcp.aws.inventory import collect_general_aws_inventory
 from aws_resource_mcp.config import DEFAULT_AWS_REGION
 
 SENSITIVE_FIELD_NAMES = frozenset(
@@ -30,6 +28,9 @@ def _error_response(
         "status": "error",
         "summary": {"region": region},
         "resources": {},
+        "all_resources": [],
+        "resources_by_service": {},
+        "coverage": {"status": "unavailable"},
         "errors": [
             {"service": service, "type": error_type, "message": message}
         ],
@@ -38,7 +39,7 @@ def _error_response(
 
 def _normalize_services(services: list[str] | None) -> list[str]:
     if services is None:
-        return sorted(SUPPORTED_INVENTORY_SERVICES)
+        return []
     if not services:
         raise ValueError("services must contain at least one supported service")
     if any(not isinstance(service, str) for service in services):
@@ -47,13 +48,27 @@ def _normalize_services(services: list[str] | None) -> list[str]:
     normalized = list(dict.fromkeys(service.strip().lower() for service in services))
     if any(not service for service in normalized):
         raise ValueError("service names must not be empty")
+    if any(not re.fullmatch(r"[a-z0-9-]+", service) for service in normalized):
+        raise ValueError("service names may contain only letters, numbers, and hyphens")
+    return normalized
 
-    unknown = set(normalized) - SUPPORTED_INVENTORY_SERVICES
-    if unknown:
-        names = ", ".join(sorted(unknown))
-        raise ValueError(
-            f"Unsupported services: {names}. Supported services: lambda, s3"
-        )
+
+def _normalize_resource_types(resource_types: list[str] | None) -> list[str]:
+    if resource_types is None:
+        return []
+    if not resource_types:
+        raise ValueError("resource_types must contain at least one resource type")
+    if any(not isinstance(resource_type, str) for resource_type in resource_types):
+        raise ValueError("every resource type must be a string")
+    normalized = list(
+        dict.fromkeys(resource_type.strip() for resource_type in resource_types)
+    )
+    if any(
+        not resource_type
+        or not re.fullmatch(r"[A-Za-z0-9:_-]+", resource_type)
+        for resource_type in normalized
+    ):
+        raise ValueError("resource types contain an invalid value")
     return normalized
 
 
@@ -69,66 +84,93 @@ def _remove_sensitive_fields(value: Any) -> Any:
     return value
 
 
+def _remove_account_ids(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: _remove_account_ids(item)
+            for key, item in value.items()
+            if key.lower() != "account_id"
+        }
+    if isinstance(value, list):
+        return [_remove_account_ids(item) for item in value]
+    return value
+
+
 def listar_recursos_aws(
-    region: str = DEFAULT_AWS_REGION,
+    region: str | None = None,
     services: list[str] | None = None,
     include_account_id: bool = True,
+    resource_types: list[str] | None = None,
+    query: str | None = None,
+    all_regions: bool = True,
 ) -> dict[str, Any]:
-    """List AWS resources through the locally available credentials, read-only.
+    """Discover AWS resources through locally available credentials, read-only.
 
-    Use this tool to inspect deployed resources or list Lambda functions and S3
-    buckets. Filter with ``services`` using ``lambda`` and/or ``s3``; omitted
-    services queries both. Results may be partial when one service is not
-    accessible. Set ``include_account_id`` to false to anonymize the account.
-    This tool never modifies resources and does not calculate costs or Free Tier.
+    Uses Resource Explorer for uniform, multi-Region discovery. Every service is
+    represented with the same resource model and discovery path. Filter by
+    service, resource type, Region, or search text. Coverage
+    depends on accessible Resource Explorer indexes, views, Regions, and IAM
+    permissions, so the response always includes a coverage diagnosis and may be
+    partial. Set ``include_account_id`` to false to anonymize the account. This
+    tool never modifies resources and does not calculate costs or Free Tier.
     """
-    if not isinstance(region, str):
+    if region is not None and not isinstance(region, str):
         return _error_response(
             "",
             "invalid_region",
-            "region must be a non-empty AWS region name",
+            "region must be null or a non-empty AWS region name",
         )
-    normalized_region = region.strip()
-    if not normalized_region:
+    normalized_region = region.strip() if region is not None else None
+    if region is not None and not normalized_region:
         return _error_response(
-            region,
+            "",
             "invalid_region",
-            "region must be a non-empty AWS region name",
+            "region must be null or a non-empty AWS region name",
         )
 
     try:
         requested_services = _normalize_services(services)
+        requested_types = _normalize_resource_types(resource_types)
     except (AttributeError, ValueError) as error:
         return _error_response(
-            normalized_region,
-            "invalid_services",
+            normalized_region or DEFAULT_AWS_REGION,
+            "invalid_filters",
             str(error),
         )
+    if query is not None and not isinstance(query, str):
+        return _error_response(
+            normalized_region or DEFAULT_AWS_REGION,
+            "invalid_query",
+            "query must be null or a string",
+        )
+    normalized_query = query.strip() if query and query.strip() else None
 
     try:
-        inventory = collect_aws_inventory(
+        inventory = collect_general_aws_inventory(
             normalized_region,
-            services=requested_services,
+            services=requested_services or None,
+            resource_types=requested_types or None,
+            query=normalized_query,
+            all_regions=all_regions,
         )
     except AWSInventoryGlobalError as error:
         return _error_response(
-            normalized_region,
+            normalized_region or DEFAULT_AWS_REGION,
             error.error["error_type"],
             error.error["message"],
             service="aws",
         )
     except Exception:
         return _error_response(
-            normalized_region,
+            normalized_region or DEFAULT_AWS_REGION,
             "inventory_error",
             "The AWS inventory could not be collected. Check the local AWS configuration.",
             service="aws",
         )
 
-    resources = {
-        service: inventory.get("services", {}).get(service, [])
-        for service in requested_services
-    }
+    resources = inventory.get("services", {})
+    all_resources = inventory.get("resources", [])
+    resources_by_service = inventory.get("resources_by_service", {})
     inventory_errors = [
         {
             "service": error.get("service", "aws"),
@@ -138,22 +180,27 @@ def listar_recursos_aws(
         for error in inventory.get("errors", [])
     ]
     summary: dict[str, Any] = {
-        "region": normalized_region,
-        "partial": bool(inventory_errors),
+        "region": inventory.get("region", normalized_region or DEFAULT_AWS_REGION),
+        "total_resources": len(all_resources),
+        "services_detected": len(resources_by_service),
+        "regions_scanned": len(inventory.get("coverage", {}).get("regions_scanned", [])),
+        "partial": bool(inventory_errors)
+        or inventory.get("coverage", {}).get("status")
+        != "complete_for_supported_resources",
     }
     account_id = inventory.get("account", {}).get("account_id")
     if include_account_id and account_id:
         summary["account_id"] = account_id
-    if "lambda" in resources:
-        summary["lambda_count"] = len(resources["lambda"])
-    if "s3" in resources:
-        summary["s3_bucket_count"] = len(resources["s3"])
-
-    return _remove_sensitive_fields(
+    status = "partial" if summary["partial"] else "ok"
+    response = _remove_sensitive_fields(
         {
-            "status": "partial" if inventory_errors else "ok",
+            "status": status,
             "summary": summary,
             "resources": resources,
+            "all_resources": all_resources,
+            "resources_by_service": resources_by_service,
+            "coverage": inventory.get("coverage", {"status": "unavailable"}),
             "errors": inventory_errors,
         }
     )
+    return response if include_account_id else _remove_account_ids(response)

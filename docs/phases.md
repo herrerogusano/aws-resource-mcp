@@ -16,26 +16,34 @@ Incorporar Boto3 y definir la capa de acceso de solo lectura a AWS, con `eu-west
 
 Implementar `listar_recursos_aws()` para consultar y devolver recursos AWS seleccionados en modo lectura.
 
-## Fase 4 — Tool `revisar_free_tier`
+## Fase 4 — Descubrimiento general con Resource Explorer
+
+Ampliar el inventario a múltiples servicios y regiones con cobertura explícita, normalización y deduplicación uniformes.
+
+## Fase 5 — Detalle y actividad con interfaz común
+
+Definir una interfaz común para consultar detalles y la última evidencia de actividad de un recurso, sin alterar el modelo según el servicio.
+
+## Fase 6 — Tool `revisar_free_tier`
 
 Implementar `revisar_free_tier()` sin usar Cost Explorer.
 
-## Fase 5 — Seguridad e IAM de solo lectura
+## Fase 7 — Seguridad e IAM de solo lectura
 
 Documentar y validar el modelo de mínimo privilegio, el uso seguro de credenciales externas y los límites de acceso.
 
-## Fase 6 — Tests y calidad
+## Fase 8 — Tests y calidad
 
 Añadir pruebas automatizadas, lint y las comprobaciones de calidad necesarias.
 
-## Fase 7 — Integración con cliente MCP
+## Fase 9 — Integración con cliente MCP
 
 Documentar y verificar la ejecución local con un cliente MCP compatible.
 
-## Fase 8 — GitHub Actions CI
+## Fase 10 — GitHub Actions CI
 
 Configurar CI para ejecutar lint y tests en cada pull request.
 
-## Fase 9 — README, demo y cierre
+## Fase 11 — README, demo y cierre
 
 Completar la documentación, preparar una demo reproducible y cerrar la primera versión del proyecto.

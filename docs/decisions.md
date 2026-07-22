@@ -68,7 +68,7 @@
 
 ## D-012 — Tolerancia a fallos parciales
 
-**Decisión:** conservar los resultados disponibles cuando falle Lambda, S3 o la consulta de región de un bucket, registrando errores estructurados.
+**Decisión:** conservar los resultados disponibles cuando falle una consulta regional o de inventario, registrando errores estructurados sin reglas por servicio.
 
 **Motivo:** una carencia puntual de permisos no debe ocultar el inventario que sí pudo obtenerse.
 
@@ -86,7 +86,7 @@
 
 ## D-015 — Filtrado antes de consultar servicios
 
-**Decisión:** el agregador admite seleccionar `lambda` y `s3`, evitando consultar servicios no solicitados. STS sigue identificando la cuenta.
+**Decisión:** el agregador admite filtrar cualquier servicio reconocido por Resource Explorer. STS sigue identificando la cuenta.
 
 **Motivo:** reduce llamadas, permisos necesarios y errores irrelevantes para la petición concreta.
 
@@ -95,3 +95,33 @@
 **Decisión:** devolver `ok`, `partial` o `error`, con resumen, recursos y errores normalizados. El ID de cuenta puede omitirse con `include_account_id=false`.
 
 **Motivo:** facilita la interpretación por clientes MCP y permite anonimizar la identidad sin alterar el inventario.
+
+## D-017 — Resource Explorer para descubrimiento general
+
+**Decisión:** utilizar índices y vistas existentes de AWS Resource Explorer, sin crearlos ni modificarlos.
+
+**Motivo:** descubre dinámicamente numerosos servicios sin mantener un catálogo manual de APIs.
+
+## D-018 — Inventario uniforme
+
+**Decisión:** tratar todos los servicios mediante Resource Explorer y representarlos con el mismo modelo de recurso.
+
+**Motivo:** evita que determinados servicios tengan mayor visibilidad, semántica o fallback que el resto.
+
+## D-019 — Índice agregador preferente
+
+**Decisión:** preferir un índice agregador y, si no existe, combinar índices locales accesibles.
+
+**Motivo:** evita búsquedas duplicadas y hace explícita la cobertura regional real.
+
+## D-020 — Cobertura no universal
+
+**Decisión:** reportar `complete_for_supported_resources`, `partial` o `unavailable`, con regiones, índices, tipos, permisos y limitaciones.
+
+**Motivo:** ningún resultado debe interpretarse como garantía de representar cualquier entidad posible de AWS.
+
+## D-021 — Deduplicación común
+
+**Decisión:** identificar primero por ARN y aplicar las mismas reglas alternativas de identidad a cualquier recurso.
+
+**Motivo:** evita duplicados sin introducir comportamiento específico por servicio.

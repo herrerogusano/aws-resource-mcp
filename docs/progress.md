@@ -2,18 +2,18 @@
 
 ## Estado actual
 
-Fase 3 completada: inventario AWS expuesto mediante la tool MCP de solo lectura `listar_recursos_aws`.
+Fase 4 completada: inventario AWS amplio mediante Resource Explorer, multirregión, deduplicado y con cobertura explícita.
 
 ## Incluido
 
-- Validación y normalización de región y servicios solicitados.
-- Filtrado para evitar consultas Lambda o S3 innecesarias.
-- Respuestas `ok`, `partial` y `error` con resumen estructurado.
-- Opción para omitir el ID de cuenta.
-- Eliminación defensiva de campos sensibles.
-- Registro conjunto de `health_check` y `listar_recursos_aws` en FastMCP.
-- Diagnóstico Python directo conservado.
-- Cuarenta y tres tests unitarios sin acceso real a AWS.
+- Regiones habilitadas mediante EC2.
+- Índices, vistas, tipos y recursos paginados desde Resource Explorer.
+- Filtros por región, servicio, tipo y texto.
+- Normalización y deduplicación comunes para todos los servicios.
+- Cobertura `complete_for_supported_resources`, `partial` o `unavailable`.
+- Ausencia explícita de fallback privilegiado cuando Resource Explorer no está disponible.
+- Anonimización del ID de cuenta en toda la respuesta.
+- Cuarenta y ocho tests unitarios sin acceso real a AWS.
 
 ## Comprobaciones
 
@@ -25,21 +25,23 @@ uv run aws-resource-mcp
 uv run python -m aws_resource_mcp.server
 uv run mcp run src/aws_resource_mcp/server.py
 uv run python -m aws_resource_mcp.aws.inventory
+aws ec2 describe-regions --all-regions --region eu-west-1
+aws resource-explorer-2 list-indexes --region eu-west-1
 ```
 
-Resultado: `43 passed`. El servidor importa sin llamadas AWS automáticas y registra exactamente `health_check` y `listar_recursos_aws`.
+Resultado: `48 passed`. El servidor importa sin llamadas AWS automáticas y registra exactamente `health_check` y `listar_recursos_aws`.
 
-La comprobación MCP real de solo lectura terminó con estado `ok` en `eu-west-1`: una función Lambda, dos buckets S3 y cero errores. Se ejecutó con `include_account_id=false`; no se registraron identificadores, ARN, perfiles ni nombres reales. El diagnóstico Python directo devolvió los mismos contadores.
+La comprobación real encontró 18 regiones habilitadas y dos índices locales de Resource Explorer, sin agregador. La respuesta fue `partial`: 72 recursos, 13 servicios, 654 tipos soportados y cero errores. Todos los servicios utilizaron el mismo origen y modelo. Cuenta, ARN y nombres fueron omitidos.
 
 ## Errores y solución
 
 Durante la primera instalación, Windows/OneDrive bloqueó la sustitución de metadatos del paquete dentro de `.venv`. Se eliminó únicamente el entorno virtual generado y `uv sync` lo recreó correctamente. `uv` también avisó de que no podía crear hardlinks entre la caché y el entorno, por lo que usó copias; esto no afecta al funcionamiento.
 
-En la Fase 3 no se encontraron errores de implementación ni permisos pendientes durante la comprobación real.
+No hubo errores de permisos. La limitación actual es la ausencia de un índice agregador: la cobertura depende de las dos regiones indexadas. El servidor no modificó esa configuración.
 
 ## Pendiente
 
-- Fase 4: implementar `revisar_free_tier` sin Cost Explorer.
+- Fase 5: interfaz común de detalle y última actividad observable.
 
 ## Bloqueos
 
