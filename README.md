@@ -4,7 +4,7 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La Fase 3 está completada. El servidor MCP expone un diagnóstico local y un inventario AWS de solo lectura mediante Boto3.
+La Fase 4 está completada. El servidor MCP descubre recursos de forma uniforme mediante AWS Resource Explorer.
 
 ## Alcance previsto
 
@@ -80,9 +80,12 @@ No se guardan claves en el proyecto. Boto3 usa su cadena estándar de resolució
 
 Consulta el inventario AWS disponible para las credenciales locales sin modificar recursos. Parámetros:
 
-- `region`: región para servicios regionales como Lambda; por defecto `eu-west-1`.
-- `services`: lista opcional con `lambda`, `s3` o ambos. Sin valor consulta ambos servicios.
+- `region`: limita la búsqueda a una región; sin valor utiliza toda la cobertura disponible.
+- `services`: filtra por servicios como `lambda`, `s3`, `ec2` o `rds`.
 - `include_account_id`: permite omitir el ID de cuenta de la respuesta para facilitar su anonimización.
+- `resource_types`: filtra por tipos dinámicos como `ec2:instance`.
+- `query`: busca por texto o nombre.
+- `all_regions`: utiliza las regiones habilitadas cuando no se especifica `region`.
 
 Ejemplo de argumentos enviados por un cliente MCP:
 
@@ -90,25 +93,29 @@ Ejemplo de argumentos enviados por un cliente MCP:
 {
   "region": "eu-west-1",
   "services": ["lambda", "s3"],
-  "include_account_id": false
+  "include_account_id": false,
+  "all_regions": true
 }
 ```
 
-Una respuesta `ok` contiene todo el inventario solicitado; `partial` conserva resultados aunque falle un servicio; `error` representa un problema global o parámetros inválidos. El resumen incluye región, contadores y si el resultado es parcial.
+Una respuesta `ok` cubre los tipos soportados por un índice agregador accesible; `partial` conserva resultados cuando faltan regiones, índices, vistas o permisos; `error` representa un problema global o parámetros inválidos. `coverage` explica qué pudo consultarse.
 
-S3 se consulta a nivel de cuenta y cada bucket conserva su propia región. El parámetro `region` afecta principalmente a Lambda. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura. `revisar_free_tier` se añadirá en la siguiente fase.
+`resources`, `all_resources` y `resources_by_service` representan el mismo inventario deduplicado con un modelo común para todos los servicios. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura. `revisar_free_tier` se añadirá en una fase posterior.
 
 ## Inventario AWS
 
 Boto3 es el SDK oficial de AWS para Python. La capa de inventario utiliza:
 
 - STS `GetCallerIdentity` para identificar la cuenta y la identidad efectiva.
-- Lambda `ListFunctions`, mediante paginador, para obtener metadatos de funciones sin descargar código, leer variables ni invocarlas.
-- S3 `ListAllMyBuckets` y `GetBucketLocation` para obtener nombres, fechas de creación y regiones, sin listar objetos ni contenido.
+- EC2 `DescribeRegions` para descubrir únicamente regiones habilitadas.
+- Resource Explorer para descubrir dinámicamente recursos y tipos soportados mediante índices y vistas existentes.
+Los resultados se deduplican por ARN o, si falta, por tipo, región e identificador/nombre. Se prefiere un índice agregador; con índices locales se combinan resultados y la cobertura es parcial. El servidor nunca crea índices o vistas ni aplica rutas especiales según el servicio.
 
-La ausencia de credenciales o la imposibilidad de identificar la cuenta es un error global. Un fallo de Lambda, S3 o de la región de un bucket es parcial: se conservan los demás datos y el problema aparece en `errors`.
+La ausencia de credenciales o la imposibilidad de identificar la cuenta es un error global. Los fallos posteriores son parciales: se conservan los datos disponibles y el problema aparece en `errors`.
 
-Los permisos de lectura previstos son `sts:GetCallerIdentity`, `lambda:ListFunctions`, `s3:ListAllMyBuckets` y `s3:GetBucketLocation`. La política IAM mínima se formalizará en la Fase 5.
+Los permisos previstos incluyen `sts:GetCallerIdentity`, `ec2:DescribeRegions` y operaciones de lectura de Resource Explorer. La política IAM mínima se formalizará posteriormente.
+
+Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista las instancias EC2 de eu-west-1”, “Busca recursos llamados web” o “Muéstrame los tipos RDS desplegados”. Resource Explorer ofrece cobertura amplia, no universal.
 
 ## Documentación
 

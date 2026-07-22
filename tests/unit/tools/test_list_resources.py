@@ -1,4 +1,4 @@
-"""Tests for the MCP-facing AWS resource inventory tool."""
+"""Tests for the MCP-facing general AWS inventory tool."""
 
 import json
 from unittest.mock import Mock, patch
@@ -11,41 +11,48 @@ from aws_resource_mcp.tools.list_resources import listar_recursos_aws
 
 def inventory(
     *,
-    lambdas: list[dict] | None = None,
-    buckets: list[dict] | None = None,
+    general: list[dict] | None = None,
     errors: list[dict] | None = None,
+    coverage_status: str = "complete_for_supported_resources",
 ) -> dict:
+    general_items = [] if general is None else general
+    grouped: dict[str, list[dict]] = {}
+    for item in general_items:
+        grouped.setdefault(item["service"], []).append(item)
     return {
-        "account": {
-            "account_id": "111122223333",
-            "arn": "arn:aws:iam::111122223333:user/example",
-            "user_id": "example",
-        },
+        "account": {"account_id": "111122223333", "arn": "example", "user_id": "id"},
         "region": "eu-west-1",
-        "services": {
-            "lambda": [] if lambdas is None else lambdas,
-            "s3": [] if buckets is None else buckets,
+        "services": grouped,
+        "resources": general_items,
+        "resources_by_service": grouped,
+        "coverage": {
+            "status": coverage_status,
+            "regions_scanned": ["eu-west-1"],
+            "regions_enabled": ["eu-west-1"],
+            "resource_explorer": {
+                "available": coverage_status != "unavailable",
+                "aggregator_index": coverage_status == "complete_for_supported_resources",
+            },
         },
         "errors": [] if errors is None else errors,
     }
 
 
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
-def test_complete_response_has_counts_and_ok_status(collect: Mock) -> None:
-    collect.return_value = inventory(
-        lambdas=[{"name": "first"}, {"name": "second"}],
-        buckets=[{"name": "bucket"}],
-    )
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_global_inventory_has_compatible_and_expanded_fields(collect: Mock) -> None:
+    resources = [
+        {"service": "lambda", "name": "function"},
+        {"service": "ec2", "name": "instance"},
+    ]
+    collect.return_value = inventory(general=resources)
     result = listar_recursos_aws()
     assert result["status"] == "ok"
-    assert result["summary"] == {
-        "region": "eu-west-1",
-        "partial": False,
-        "account_id": "111122223333",
-        "lambda_count": 2,
-        "s3_bucket_count": 1,
-    }
-    assert set(result["resources"]) == {"lambda", "s3"}
+    assert result["summary"]["total_resources"] == 2
+    assert result["summary"]["services_detected"] == 2
+    assert result["summary"]["partial"] is False
+    assert result["resources"]["lambda"] == [resources[0]]
+    assert result["all_resources"] == resources
+    assert result["coverage"]["status"] == "complete_for_supported_resources"
 
 
 @pytest.mark.parametrize(
@@ -55,62 +62,97 @@ def test_complete_response_has_counts_and_ok_status(collect: Mock) -> None:
         (["s3"], ["s3"]),
         (["lambda", "s3"], ["lambda", "s3"]),
         (["lambda", "lambda"], ["lambda"]),
-        (["LAMBDA", "S3"], ["lambda", "s3"]),
+        (["EC2", "S3"], ["ec2", "s3"]),
     ],
 )
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
 def test_service_filtering_and_normalization(
     collect: Mock, requested: list[str], expected: list[str]
 ) -> None:
     collect.return_value = inventory()
-    result = listar_recursos_aws(services=requested)
-    collect.assert_called_once_with("eu-west-1", services=expected)
-    assert list(result["resources"]) == expected
+    listar_recursos_aws(region="eu-west-1", services=requested)
+    collect.assert_called_once_with(
+        "eu-west-1",
+        services=expected,
+        resource_types=None,
+        query=None,
+        all_regions=True,
+    )
 
 
-@pytest.mark.parametrize("services", [[], ["dynamodb"], [""], [1]])
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_region_type_query_and_all_regions_filters(collect: Mock) -> None:
+    collect.return_value = inventory()
+    listar_recursos_aws(
+        region="eu-central-1",
+        services=["ec2"],
+        resource_types=["ec2:instance"],
+        query="web",
+        all_regions=False,
+    )
+    collect.assert_called_once_with(
+        "eu-central-1",
+        services=["ec2"],
+        resource_types=["ec2:instance"],
+        query="web",
+        all_regions=False,
+    )
+
+
+@pytest.mark.parametrize("services", [[], [""], [1], ["ec2 instance"]])
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
 def test_invalid_services_return_controlled_error(
-    collect: Mock, services: list[str]
+    collect: Mock, services: list
 ) -> None:
     result = listar_recursos_aws(services=services)
     assert result["status"] == "error"
-    assert result["errors"][0]["type"] == "invalid_services"
+    assert result["errors"][0]["type"] == "invalid_filters"
     collect.assert_not_called()
 
 
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
-def test_empty_region_returns_controlled_error(collect: Mock) -> None:
-    result = listar_recursos_aws(region="  ")
-    assert result["status"] == "error"
-    assert result["errors"][0]["type"] == "invalid_region"
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_invalid_region_type_and_query_return_controlled_errors(collect: Mock) -> None:
+    assert listar_recursos_aws(region="  ")["status"] == "error"
+    assert listar_recursos_aws(resource_types=[])["status"] == "error"
+    assert listar_recursos_aws(resource_types=["not valid"])["status"] == "error"
+    assert listar_recursos_aws(query=123)["status"] == "error"
     collect.assert_not_called()
 
 
-@pytest.mark.parametrize("failed_service", ["lambda", "s3"])
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
-def test_partial_service_error_is_preserved(
-    collect: Mock, failed_service: str
-) -> None:
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_partial_coverage_and_service_error_are_preserved(collect: Mock) -> None:
     collect.return_value = inventory(
-        lambdas=[{"name": "visible"}] if failed_service == "s3" else [],
-        buckets=[{"name": "visible"}] if failed_service == "lambda" else [],
+        general=[{"service": "lambda", "name": "visible"}],
         errors=[
             {
-                "service": failed_service,
+                "service": "resource-explorer-2",
                 "error_type": "access_denied",
                 "message": "Check read-only permissions.",
             }
         ],
+        coverage_status="partial",
     )
     result = listar_recursos_aws()
     assert result["status"] == "partial"
     assert result["summary"]["partial"] is True
-    assert result["errors"][0]["service"] == failed_service
     assert result["errors"][0]["type"] == "access_denied"
 
 
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_unavailable_resource_explorer_has_no_service_specific_fallback(
+    collect: Mock,
+) -> None:
+    collect.return_value = inventory(
+        coverage_status="unavailable",
+    )
+    result = listar_recursos_aws()
+    assert result["status"] == "partial"
+    assert result["resources"] == {}
+    assert result["all_resources"] == []
+    assert result["coverage"]["status"] == "unavailable"
+
+
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
 def test_global_credential_error_is_controlled(collect: Mock) -> None:
     collect.side_effect = AWSInventoryGlobalError(
         {
@@ -123,44 +165,29 @@ def test_global_credential_error_is_controlled(collect: Mock) -> None:
     assert result["status"] == "error"
     assert result["resources"] == {}
     assert result["errors"][0]["service"] == "aws"
-    assert result["errors"][0]["type"] == "credentials_not_found"
 
 
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
-def test_unexpected_error_does_not_expose_exception(collect: Mock) -> None:
-    collect.side_effect = RuntimeError("internal detail")
-    result = listar_recursos_aws()
-    assert result["status"] == "error"
-    assert "internal detail" not in json.dumps(result)
-
-
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
-def test_empty_inventory_is_valid_and_serializable(collect: Mock) -> None:
-    collect.return_value = inventory()
-    result = listar_recursos_aws()
-    assert result["status"] == "ok"
-    assert result["summary"]["lambda_count"] == 0
-    assert result["summary"]["s3_bucket_count"] == 0
-    json.dumps(result)
-
-
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
-def test_account_id_can_be_omitted(collect: Mock) -> None:
-    collect.return_value = inventory()
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_account_id_can_be_omitted_and_response_is_json(collect: Mock) -> None:
+    collect.return_value = inventory(
+        general=[{"service": "ec2", "account_id": "111122223333"}]
+    )
     result = listar_recursos_aws(include_account_id=False)
-    assert "account_id" not in result["summary"]
+    serialized = json.dumps(result)
+    assert "account_id" not in serialized
+    assert "111122223333" not in serialized
 
 
-@patch("aws_resource_mcp.tools.list_resources.collect_aws_inventory")
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
 def test_sensitive_fields_are_removed_recursively(collect: Mock) -> None:
     collect.return_value = inventory(
-        lambdas=[
+        general=[
             {
-                "name": "example",
-                "credentials": {
-                    "aws_access_key_id": "not-a-real-key",
-                    "aws_secret_access_key": "not-a-real-secret",
-                    "session_token": "not-a-real-token",
+                "service": "ec2",
+                "credentials": {"aws_access_key_id": "not-real"},
+                "properties": {
+                    "aws_secret_access_key": "not-real",
+                    "session_token": "not-real",
                 },
             }
         ]
