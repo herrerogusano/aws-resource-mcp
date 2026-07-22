@@ -70,6 +70,7 @@ _FREE_OPERATIONS = (
     ("iam", "ListPolicies", "list_policies"),
     ("cloudfront", "ListDistributions", "list_distributions"),
     ("route53", "ListHostedZones", "list_hosted_zones"),
+    ("cloudtrail", "LookupEvents", "lookup_events"),
 )
 
 _POTENTIALLY_BILLABLE_OPERATIONS = (
@@ -85,6 +86,9 @@ _POTENTIALLY_BILLABLE_OPERATIONS = (
     ("sqs", "GetQueueAttributes", "get_queue_attributes"),
     ("sns", "ListTopics", "list_topics"),
     ("sns", "ListSubscriptionsByTopic", "list_subscriptions_by_topic"),
+    ("cloudwatch", "GetMetricData", "get_metric_data"),
+    ("cloudwatch", "GetMetricStatistics", "get_metric_statistics"),
+    ("cloudwatch", "ListMetrics", "list_metrics"),
 )
 
 OPERATION_REGISTRY = {

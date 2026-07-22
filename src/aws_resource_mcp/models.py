@@ -38,10 +38,55 @@ class CostIndicator(TypedDict):
     actual_cost_confirmed: Literal[False]
 
 
-class ResourceActivity(TypedDict):
-    """Uniform activity placeholder until activity analysis is implemented."""
+ActivityStatus = Literal[
+    "active", "inactive_candidate", "unknown", "not_supported",
+    "blocked_by_cost_policy", "error",
+]
+ActivityType = Literal[
+    "functional_usage", "administrative_activity", "configuration_change",
+    "resource_state", "unknown",
+]
+ActivityConfidence = Literal["high", "medium", "low", "unknown"]
 
-    status: Literal["not_analyzed"]
+
+class ActivityEvidence(TypedDict, total=False):
+    """Minimal, anonymized evidence supporting an activity result."""
+
+    timestamp: str | None
+    event_name: str
+    event_source: str
+    read_only: bool | None
+    region: str
+    resource_ids: list[str]
+    activity_type: ActivityType
+    source: str
+    confidence: ActivityConfidence
+    category: str
+
+
+class ResourceActivity(TypedDict, total=False):
+    """Uniform activity analysis shared by every AWS resource type."""
+
+    status: ActivityStatus
+    last_activity_at: str | None
+    days_since_activity: int | None
+    activity_type: ActivityType
+    activity_name: str | None
+    source: str | None
+    confidence: ActivityConfidence
+    lookback_days: int
+    last_functional_usage_at: str | None
+    last_administrative_activity_at: str | None
+    last_configuration_change_at: str | None
+    last_state_change_at: str | None
+    best_known_activity_at: str | None
+    best_known_activity_type: ActivityType
+    evidence: list[ActivityEvidence]
+    limitations: list[str]
+    paid_data_available: bool
+    paid_data_requested: bool
+    paid_data_executed: bool
+    paid_enrichment: dict[str, Any]
 
 
 class Resource(TypedDict):
@@ -100,7 +145,27 @@ def make_resource(
         "sources": [source],
         "details": remove_sensitive_fields(details or {}),
         "cost_indicators": cost_indicators or [],
-        "activity": {"status": "not_analyzed"},
+        "activity": {
+            "status": "unknown",
+            "last_activity_at": None,
+            "days_since_activity": None,
+            "activity_type": "unknown",
+            "activity_name": None,
+            "source": None,
+            "confidence": "unknown",
+            "lookback_days": 0,
+            "last_functional_usage_at": None,
+            "last_administrative_activity_at": None,
+            "last_configuration_change_at": None,
+            "last_state_change_at": None,
+            "best_known_activity_at": None,
+            "best_known_activity_type": "unknown",
+            "evidence": [],
+            "limitations": ["Activity analysis has not been requested."],
+            "paid_data_available": False,
+            "paid_data_requested": False,
+            "paid_data_executed": False,
+        },
     }
 
 

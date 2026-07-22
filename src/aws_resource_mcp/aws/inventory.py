@@ -43,6 +43,7 @@ def collect_general_aws_inventory(
     include_cost_indicators: bool = True,
     cost_mode: str | None = None,
     confirm_potentially_billable_operations: bool = False,
+    include_global_resource_explorer_results: bool = False,
 ) -> dict[str, Any]:
     """Run general discovery and every selected adapter through one pipeline."""
     primary_region = region or DEFAULT_AWS_REGION
@@ -95,7 +96,9 @@ def collect_general_aws_inventory(
         resource_types=requested_types,
         query=query,
         region_filter=(
-            region
+            None
+            if include_global_resource_explorer_results
+            else region
             if region is not None
             else (None if all_regions else primary_region)
         ),
