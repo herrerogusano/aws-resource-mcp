@@ -20,30 +20,34 @@ Implementar `listar_recursos_aws()` para consultar y devolver recursos AWS selec
 
 Ampliar el inventario a múltiples servicios y regiones con cobertura explícita, normalización y deduplicación uniformes.
 
-## Fase 5 — Detalle y actividad con interfaz común
+## Fase 5 — Adaptadores y detalles con interfaz común
 
-Definir una interfaz común para consultar detalles y la última evidencia de actividad de un recurso, sin alterar el modelo según el servicio.
+Implementar el registro común, adaptadores de solo lectura, detalles normalizados, indicadores potenciales, fallback uniforme y política zero-cost. La actividad queda marcada como no analizada.
 
-## Fase 6 — Tool `revisar_free_tier`
+## Fase 6 — Actividad y último uso conocido
+
+Analizar señales de actividad mediante un contrato común, distinguiendo evidencia, ausencia de datos y fecha de último uso.
+
+## Fase 7 — Tool `revisar_free_tier`
 
 Implementar `revisar_free_tier()` sin usar Cost Explorer.
 
-## Fase 7 — Seguridad e IAM de solo lectura
+## Fase 8 — Seguridad e IAM de solo lectura
 
 Documentar y validar el modelo de mínimo privilegio, el uso seguro de credenciales externas y los límites de acceso.
 
-## Fase 8 — Tests y calidad
+## Fase 9 — Tests y calidad
 
 Añadir pruebas automatizadas, lint y las comprobaciones de calidad necesarias.
 
-## Fase 9 — Integración con cliente MCP
+## Fase 10 — Integración con cliente MCP
 
 Documentar y verificar la ejecución local con un cliente MCP compatible.
 
-## Fase 10 — GitHub Actions CI
+## Fase 11 — GitHub Actions CI
 
 Configurar CI para ejecutar lint y tests en cada pull request.
 
-## Fase 11 — README, demo y cierre
+## Fase 12 — README, demo y cierre
 
 Completar la documentación, preparar una demo reproducible y cerrar la primera versión del proyecto.

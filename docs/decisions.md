@@ -104,7 +104,7 @@
 
 ## D-018 — Inventario uniforme
 
-**Decisión:** tratar todos los servicios mediante Resource Explorer y representarlos con el mismo modelo de recurso.
+**Decisión:** representar todos los servicios con el mismo modelo y pipeline, combinando fuentes generales y adaptadores sin privilegios arquitectónicos.
 
 **Motivo:** evita que determinados servicios tengan mayor visibilidad, semántica o fallback que el resto.
 
@@ -125,3 +125,33 @@
 **Decisión:** identificar primero por ARN y aplicar las mismas reglas alternativas de identidad a cualquier recurso.
 
 **Motivo:** evita duplicados sin introducir comportamiento específico por servicio.
+
+## D-022 — Registro único de adaptadores
+
+**Decisión:** ejecutar Lambda, S3 y los demás servicios desde un único registro que valida el contrato y las operaciones declaradas.
+
+**Motivo:** elimina rutas legacy y permite ampliar cobertura sin cambiar el motor ni la tool MCP.
+
+## D-023 — Modelo raíz común
+
+**Decisión:** todos los recursos comparten los mismos campos raíz; la información particular se almacena en `details`.
+
+**Motivo:** simplifica consumo, serialización, deduplicación, seguridad y pruebas arquitectónicas.
+
+## D-024 — Zero-cost por defecto
+
+**Decisión:** usar `AWS_MCP_COST_MODE=free-only` por defecto y bloquear operaciones no registradas, desconocidas, de escritura o potencialmente facturables.
+
+**Motivo:** una operación de lectura no es necesariamente gratuita. S3, SQS y SNS contabilizan peticiones y requieren modo de confirmación más confirmación explícita.
+
+## D-025 — Indicadores, no costes
+
+**Decisión:** exponer únicamente indicadores potenciales de configuración con `actual_cost_confirmed=false`.
+
+**Motivo:** sin consultar fuentes de facturación no puede afirmarse coste real, cobertura de Free Tier ni actividad.
+
+## D-026 — Fallback uniforme
+
+**Decisión:** cuando falle el descubrimiento general, ejecutar todos los adaptadores seleccionados que soportan descubrimiento y registrar su cobertura.
+
+**Motivo:** evita privilegiar servicios por orden histórico de implementación.

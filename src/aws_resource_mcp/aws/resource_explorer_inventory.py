@@ -4,13 +4,16 @@ from datetime import datetime, timezone
 from typing import Any
 
 from aws_resource_mcp.aws.errors import describe_aws_error
-from aws_resource_mcp.models import InventoryError, to_iso8601
+from aws_resource_mcp.aws.operations import OperationGuard
+from aws_resource_mcp.models import InventoryError, Resource, make_resource
 
 
 def _paginated_call(
     client: Any,
+    service: str,
     operation: str,
     result_key: str,
+    operation_guard: OperationGuard | None = None,
     **parameters: Any,
 ) -> list[Any]:
     results: list[Any] = []
@@ -19,16 +22,23 @@ def _paginated_call(
         request = dict(parameters)
         if next_token:
             request["NextToken"] = next_token
-        response = getattr(client, operation)(**request)
+        guard = operation_guard or OperationGuard()
+        response = guard.call(
+            client, service=service, operation=operation, **request
+        )
         results.extend(response.get(result_key, []))
         next_token = response.get("NextToken")
         if not next_token:
             return results
 
 
-def list_resource_explorer_indexes(client: Any) -> list[dict[str, str | None]]:
+def list_resource_explorer_indexes(
+    client: Any, operation_guard: OperationGuard | None = None
+) -> list[dict[str, str | None]]:
     """List accessible Resource Explorer indexes with pagination."""
-    indexes = _paginated_call(client, "list_indexes", "Indexes")
+    indexes = _paginated_call(
+        client, "resource-explorer-2", "ListIndexes", "Indexes", operation_guard
+    )
     return sorted(
         (
             {
@@ -42,17 +52,27 @@ def list_resource_explorer_indexes(client: Any) -> list[dict[str, str | None]]:
     )
 
 
-def list_resource_explorer_views(client: Any) -> list[str]:
+def list_resource_explorer_views(
+    client: Any, operation_guard: OperationGuard | None = None
+) -> list[str]:
     """List accessible Resource Explorer view ARNs with pagination."""
-    return sorted(_paginated_call(client, "list_views", "Views"))
+    return sorted(
+        _paginated_call(
+            client, "resource-explorer-2", "ListViews", "Views", operation_guard
+        )
+    )
 
 
-def list_supported_resource_types(client: Any) -> list[dict[str, Any]]:
+def list_supported_resource_types(
+    client: Any, operation_guard: OperationGuard | None = None
+) -> list[dict[str, Any]]:
     """List Resource Explorer types dynamically with pagination."""
     resource_types = _paginated_call(
         client,
-        "list_supported_resource_types",
+        "resource-explorer-2",
+        "ListSupportedResourceTypes",
         "ResourceTypes",
+        operation_guard,
     )
     return sorted(
         (
@@ -101,37 +121,52 @@ def _resource_name(resource: dict[str, Any]) -> str | None:
     return None
 
 
-def normalize_resource_explorer_resource(resource: dict[str, Any]) -> dict[str, Any]:
+def normalize_resource_explorer_resource(resource: dict[str, Any]) -> Resource:
     """Normalize a Resource Explorer result without assuming property shapes."""
     properties = {
         str(item.get("Name")): item.get("Data")
         for item in resource.get("Properties", [])
         if item.get("Name")
     }
-    return {
-        "arn": resource.get("Arn"),
-        "service": resource.get("Service"),
-        "resource_type": resource.get("CfnResourceType")
-        or resource.get("ResourceType"),
-        "region": resource.get("Region") or "global",
-        "account_id": resource.get("OwningAccountId"),
-        "name": _resource_name(resource),
-        "sources": ["resource_explorer"],
-        "last_reported_at": to_iso8601(resource.get("LastReportedAt")),
-        "properties": properties,
-    }
+    arn = resource.get("Arn")
+    identifier = None
+    if arn:
+        identifier = str(arn).rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+    return make_resource(
+        service=resource.get("Service") or "unknown",
+        resource_type=resource.get("CfnResourceType")
+        or resource.get("ResourceType")
+        or "unknown",
+        region=resource.get("Region") or "global",
+        source="resource_explorer",
+        identifier=identifier,
+        arn=arn,
+        name=_resource_name(resource),
+        account_id=resource.get("OwningAccountId"),
+        details={
+            "resource_explorer_properties": properties,
+            "last_reported_at": (
+                resource.get("LastReportedAt").isoformat()
+                if hasattr(resource.get("LastReportedAt"), "isoformat")
+                else resource.get("LastReportedAt")
+            ),
+        },
+    )
 
 
 def search_resource_explorer(
     client: Any,
     view_arn: str,
     query_string: str,
-) -> list[dict[str, Any]]:
+    operation_guard: OperationGuard | None = None,
+) -> list[Resource]:
     """Search one Resource Explorer view and normalize every result page."""
     resources = _paginated_call(
         client,
-        "search",
+        "resource-explorer-2",
+        "Search",
         "Resources",
+        operation_guard,
         QueryString=query_string,
         ViewArn=view_arn,
     )
@@ -147,6 +182,7 @@ def discover_with_resource_explorer(
     resource_types: list[str] | None = None,
     query: str | None = None,
     region_filter: str | None = None,
+    operation_guard: OperationGuard | None = None,
 ) -> dict[str, Any]:
     """Discover resources using an aggregator index or accessible local indexes."""
     coverage: dict[str, Any] = {
@@ -166,7 +202,7 @@ def discover_with_resource_explorer(
     for probe_region in probe_regions:
         try:
             client = session.client("resource-explorer-2", region_name=probe_region)
-            indexes = list_resource_explorer_indexes(client)
+            indexes = list_resource_explorer_indexes(client, operation_guard)
             coverage["available"] = True
             break
         except Exception as error:
@@ -211,19 +247,23 @@ def discover_with_resource_explorer(
         try:
             client = session.client("resource-explorer-2", region_name=index_region)
             if not types_loaded:
-                supported = list_supported_resource_types(client)
+                supported = list_supported_resource_types(client, operation_guard)
                 coverage["supported_resource_type_count"] = len(supported)
                 coverage["services_recognized"] = sorted(
                     {item["service"] for item in supported if item.get("service")}
                 )
                 types_loaded = True
-            views = list_resource_explorer_views(client)
+            views = list_resource_explorer_views(client, operation_guard)
             if not views:
                 coverage["limitations"].append(
                     f"No accessible Resource Explorer view exists in {index_region}."
                 )
                 continue
-            discovered.extend(search_resource_explorer(client, views[0], search_query))
+            discovered.extend(
+                search_resource_explorer(
+                    client, views[0], search_query, operation_guard
+                )
+            )
         except Exception as error:
             described = describe_aws_error("resource-explorer-2", error)
             errors.append(described)

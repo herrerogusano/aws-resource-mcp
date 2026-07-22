@@ -4,7 +4,7 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La Fase 4 está completada. El servidor MCP descubre recursos de forma uniforme mediante AWS Resource Explorer.
+La Fase 5 está completada. El servidor combina Resource Explorer con un registro uniforme de adaptadores de solo lectura para los principales servicios AWS.
 
 ## Alcance previsto
 
@@ -86,6 +86,9 @@ Consulta el inventario AWS disponible para las credenciales locales sin modifica
 - `resource_types`: filtra por tipos dinámicos como `ec2:instance`.
 - `query`: busca por texto o nombre.
 - `all_regions`: utiliza las regiones habilitadas cuando no se especifica `region`.
+- `include_details`: incluye metadatos específicos dentro de `details`.
+- `include_cost_indicators`: incluye señales potenciales de coste sin afirmar gasto real.
+- `confirm_potentially_billable_operations`: confirma operaciones potencialmente facturables; solo tiene efecto junto a `AWS_MCP_COST_MODE=allow-paid-with-confirmation`.
 
 Ejemplo de argumentos enviados por un cliente MCP:
 
@@ -100,7 +103,7 @@ Ejemplo de argumentos enviados por un cliente MCP:
 
 Una respuesta `ok` cubre los tipos soportados por un índice agregador accesible; `partial` conserva resultados cuando faltan regiones, índices, vistas o permisos; `error` representa un problema global o parámetros inválidos. `coverage` explica qué pudo consultarse.
 
-`resources`, `all_resources` y `resources_by_service` representan el mismo inventario deduplicado con un modelo común para todos los servicios. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura. `revisar_free_tier` se añadirá en una fase posterior.
+`resources`, `all_resources` y `resources_by_service` representan el mismo inventario deduplicado. Cada recurso contiene `id`, `arn`, `name`, `service`, `resource_type`, `region`, `account_id`, `state`, `created_at`, `sources`, `details`, `cost_indicators` y `activity`. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura.
 
 ## Inventario AWS
 
@@ -109,11 +112,15 @@ Boto3 es el SDK oficial de AWS para Python. La capa de inventario utiliza:
 - STS `GetCallerIdentity` para identificar la cuenta y la identidad efectiva.
 - EC2 `DescribeRegions` para descubrir únicamente regiones habilitadas.
 - Resource Explorer para descubrir dinámicamente recursos y tipos soportados mediante índices y vistas existentes.
-Los resultados se deduplican por ARN o, si falta, por tipo, región e identificador/nombre. Se prefiere un índice agregador; con índices locales se combinan resultados y la cobertura es parcial. El servidor nunca crea índices o vistas ni aplica rutas especiales según el servicio.
+- Un registro común de adaptadores para Lambda, S3, EC2/EBS/VPC, RDS/Aurora, DynamoDB, ECS/Fargate, API Gateway, CloudFormation, SQS, SNS, IAM, CloudFront y Route 53.
+
+Lambda y S3 fueron los primeros servicios implementados, pero ya no conservan rutas arquitectónicas especiales. Todos los adaptadores declaran metadatos, operaciones Boto3, alcance, tipos, detalles e indicadores mediante el mismo contrato. Los detalles particulares viven únicamente dentro de `details`.
+
+Los resultados se deduplican por ARN o, si falta, por tipo, región e identificador/nombre. Se prefiere un índice agregador; con índices locales se combinan resultados y la cobertura es parcial. Si Resource Explorer no está disponible, se ejecutan todos los adaptadores seleccionados que soportan descubrimiento.
 
 La ausencia de credenciales o la imposibilidad de identificar la cuenta es un error global. Los fallos posteriores son parciales: se conservan los datos disponibles y el problema aparece en `errors`.
 
-Los permisos previstos incluyen `sts:GetCallerIdentity`, `ec2:DescribeRegions` y operaciones de lectura de Resource Explorer. La política IAM mínima se formalizará posteriormente.
+Todas las llamadas Boto3 pasan primero por un registro central. Las operaciones no registradas, de escritura o de coste desconocido se bloquean. El modo predeterminado `AWS_MCP_COST_MODE=free-only` bloquea también operaciones potencialmente facturables. S3, SQS y SNS pertenecen a esta categoría porque AWS puede contabilizar sus peticiones; sus recursos todavía pueden aparecer mediante Resource Explorer.
 
 Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista las instancias EC2 de eu-west-1”, “Busca recursos llamados web” o “Muéstrame los tipos RDS desplegados”. Resource Explorer ofrece cobertura amplia, no universal.
 
@@ -123,3 +130,5 @@ Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista 
 - [Decisiones](docs/decisions.md)
 - [Fases](docs/phases.md)
 - [Progreso](docs/progress.md)
+- [Política zero-cost](docs/zero-cost-policy.md)
+- [Adaptadores de servicios](docs/service-adapters.md)

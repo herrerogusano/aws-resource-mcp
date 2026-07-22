@@ -2,6 +2,7 @@
 
 from typing import Any
 
+from aws_resource_mcp.aws.operations import OperationGuard
 from aws_resource_mcp.config import DEFAULT_AWS_REGION
 
 ENABLED_REGION_STATUSES = frozenset({"opt-in-not-required", "opted-in"})
@@ -10,10 +11,16 @@ ENABLED_REGION_STATUSES = frozenset({"opt-in-not-required", "opted-in"})
 def list_aws_regions(
     session: Any,
     endpoint_region: str = DEFAULT_AWS_REGION,
+    operation_guard: OperationGuard | None = None,
 ) -> list[dict[str, Any]]:
     """Return all AWS Regions with normalized opt-in and enabled state."""
     client = session.client("ec2", region_name=endpoint_region)
-    response = client.describe_regions(AllRegions=True)
+    response = (operation_guard or OperationGuard()).call(
+        client,
+        service="ec2",
+        operation="DescribeRegions",
+        AllRegions=True,
+    )
     regions = [
         {
             "name": item.get("RegionName"),

@@ -9,13 +9,13 @@ def resource_identity(resource: dict[str, Any]) -> tuple[str, ...]:
     if arn:
         return ("arn", str(arn).strip())
 
-    properties = resource.get("properties", {})
-    identifier = resource.get("identifier")
-    if not identifier and isinstance(properties, dict):
+    details = resource.get("details", {})
+    identifier = resource.get("id") or resource.get("identifier")
+    if not identifier and isinstance(details, dict):
         identifier = (
-            properties.get("Identifier")
-            or properties.get("ResourceId")
-            or properties.get("Id")
+            details.get("Identifier")
+            or details.get("ResourceId")
+            or details.get("Id")
         )
     resource_type = resource.get("resource_type")
     region = resource.get("region") or "global"
@@ -37,17 +37,31 @@ def merge_resources(
     """Merge duplicate general-discovery records without service preference."""
     merged = dict(current)
     for key, value in duplicate.items():
-        if key not in {"properties", "sources"} and value is not None:
+        if key not in {"details", "properties", "sources", "cost_indicators"} and value not in (None, "", [], {}):
             merged[key] = value
     merged["sources"] = list(
         dict.fromkeys(
             [*current.get("sources", []), *duplicate.get("sources", [])]
         )
     )
-    merged["properties"] = {
-        **current.get("properties", {}),
-        **duplicate.get("properties", {}),
+    merged["details"] = {
+        **current.get("details", current.get("properties", {})),
+        **{
+            key: value
+            for key, value in duplicate.get(
+                "details", duplicate.get("properties", {})
+            ).items()
+            if value not in (None, "", [], {})
+        },
     }
+    indicators = [
+        *current.get("cost_indicators", []),
+        *duplicate.get("cost_indicators", []),
+    ]
+    merged["cost_indicators"] = list(
+        {indicator.get("type", str(index)): indicator for index, indicator in enumerate(indicators)}.values()
+    )
+    merged.pop("properties", None)
     return merged
 
 
