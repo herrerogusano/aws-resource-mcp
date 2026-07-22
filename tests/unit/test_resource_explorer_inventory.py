@@ -79,7 +79,9 @@ def test_search_is_paginated_and_properties_are_variable() -> None:
     assert len(resources) == 2
     assert resources[0]["name"] == "web"
     assert resources[0]["resource_type"] == "AWS::EC2::Instance"
-    assert resources[0]["properties"]["State"] == {"Value": "running"}
+    assert resources[0]["details"]["resource_explorer_properties"]["State"] == {
+        "Value": "running"
+    }
     assert resources[1]["region"] == "global"
 
 
@@ -199,3 +201,19 @@ def test_normalizer_handles_resource_without_name_or_arn() -> None:
     )
     assert result["name"] is None
     assert result["arn"] is None
+
+
+def test_normalizer_removes_sensitive_or_full_document_properties() -> None:
+    result = normalize_resource_explorer_resource(
+        {
+            "Service": "example",
+            "ResourceType": "example:type",
+            "Properties": [
+                {"Name": "Policy", "Data": {"Statement": ["hidden"]}},
+                {"Name": "Name", "Data": "visible"},
+            ],
+        }
+    )
+    properties = result["details"]["resource_explorer_properties"]
+    assert "Policy" not in properties
+    assert properties["Name"] == "visible"
