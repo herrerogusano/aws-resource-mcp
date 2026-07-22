@@ -155,3 +155,33 @@
 **Decisión:** cuando falle el descubrimiento general, ejecutar todos los adaptadores seleccionados que soportan descubrimiento y registrar su cobertura.
 
 **Motivo:** evita privilegiar servicios por orden histórico de implementación.
+
+## D-027 — Modelo de actividad semántico
+
+**Decisión:** conservar por separado uso funcional, actividad administrativa, cambio de configuración y cambio de estado, con fecha, fuente y confianza explícitas.
+
+**Motivo:** una operación de gestión, una modificación o un estado activo no demuestran que el recurso esté realizando su función.
+
+## D-028 — CloudTrail Event History como fuente transversal
+
+**Decisión:** consultar `cloudtrail:LookupEvents` una vez por región, paginar y reutilizar los eventos para correlacionarlos con todos los recursos compatibles.
+
+**Motivo:** Event History ofrece sin cargo los eventos de administración regionales de hasta 90 días y evita multiplicar consultas por recurso. Su relación con recursos puede ser incompleta y no incluye normalmente eventos de datos.
+
+## D-029 — Evidencia mínima y anonimizada
+
+**Decisión:** conservar únicamente fecha, nombre y origen del evento, indicador de lectura, región, identificadores relacionados, tipo, categoría y confianza.
+
+**Motivo:** identidad, IP, access key ID, user agent, parámetros y JSON completo no son necesarios para explicar actividad y aumentan el riesgo de exposición.
+
+## D-030 — Inactividad conservadora
+
+**Decisión:** usar `inactive_candidate` solo con una fuente relevante consultada, recurso suficientemente antiguo, evidencia fuera del umbral y ninguna señal reciente contradictoria; en caso de permisos insuficientes o evidencia débil se usa `unknown`.
+
+**Motivo:** la ausencia de eventos no prueba ausencia de uso.
+
+## D-031 — CloudWatch preparado pero bloqueado
+
+**Decisión:** registrar `GetMetricData`, `GetMetricStatistics` y `ListMetrics` como potencialmente facturables, describir su posible enriquecimiento y no ejecutarlas en la Fase 6, incluso con `include_paid_sources=true`.
+
+**Motivo:** pedir información avanzada no equivale a consentimiento concreto y limitado para generar posibles cargos.

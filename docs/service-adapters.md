@@ -38,10 +38,22 @@ Lambda y S3 se implementaron antes que los demás, pero fueron migrados al regis
   "sources": [],
   "details": {},
   "cost_indicators": [],
-  "activity": {"status": "not_analyzed"}
+  "activity": {"status": "unknown"}
 }
 ```
 
 Los adaptadores no devuelven código, variables de entorno, objetos S3, mensajes, endpoints SNS, plantillas, parámetros sensibles, documentos de política ni registros DNS completos.
 
 Los indicadores describen configuraciones como cómputo activo, almacenamiento versionado, réplicas, capacidad provisionada, NAT Gateway o recursos no asociados. Son señales potenciales y nunca confirman gasto.
+
+## Contrato de actividad
+
+Todos los adaptadores implementan `get_free_activity_signals(resources, context)`. La implementación base normaliza fecha de creación, estado y los campos de actividad declarados en `AdapterMetadata`; ningún adaptador llama directamente a CloudTrail o CloudWatch.
+
+- Lambda declara `LastModified` como cambio de configuración, nunca como última invocación.
+- IAM puede declarar `RoleLastUsed` o `PasswordLastUsed` como uso funcional oficial.
+- CloudFormation y CloudFront declaran sus fechas de actualización como cambios de configuración.
+- EC2/EBS, RDS, ECS/Fargate y los demás conservan creación y estado como señales indirectas cuando no existe un campo de uso fiable.
+- S3 no lista objetos ni afirma conocer su último acceso; SQS no recibe mensajes; SNS no publica; DynamoDB no ejecuta `Scan` ni `Query`; RDS no abre conexiones.
+
+El motor común correlaciona después estas señales con eventos CloudTrail normalizados. Lambda, S3, EC2, RDS y el resto atraviesan exactamente el mismo registro, método, clasificador, política de costes, modelo de error y construcción de resultados.
