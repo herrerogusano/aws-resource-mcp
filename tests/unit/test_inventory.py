@@ -8,10 +8,17 @@ import pytest
 
 from aws_resource_mcp.aws.errors import AWSInventoryGlobalError
 from aws_resource_mcp.aws.inventory import (
+    _matches_resource_type,
     collect_aws_inventory,
     collect_general_aws_inventory,
     main,
 )
+
+
+def test_cfn_and_resource_explorer_type_filters_are_equivalent() -> None:
+    resource = {"resource_type": "AWS::EC2::Instance"}
+    assert _matches_resource_type(resource, {"aws::ec2::instance"})
+    assert _matches_resource_type(resource, {"ec2:instance"})
 
 
 @patch("aws_resource_mcp.aws.inventory.collect_general_aws_inventory")
@@ -69,6 +76,7 @@ def test_inventory_source_does_not_expose_credential_fields() -> None:
     assert "session_token" not in serialized
 
 
+@patch("aws_resource_mcp.aws.inventory.execute_adapters")
 @patch("aws_resource_mcp.aws.inventory.discover_with_resource_explorer")
 @patch("aws_resource_mcp.aws.inventory.list_aws_regions")
 @patch("aws_resource_mcp.aws.inventory.get_aws_identity")
@@ -76,6 +84,7 @@ def test_general_inventory_scans_enabled_regions_and_deduplicates(
     identity: Mock,
     regions: Mock,
     explorer: Mock,
+    adapters: Mock,
 ) -> None:
     identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
     regions.return_value = [
@@ -91,7 +100,19 @@ def test_general_inventory_scans_enabled_regions_and_deduplicates(
         "region": "eu-west-1",
         "name": "function",
         "sources": ["resource_explorer"],
-        "properties": {},
+        "details": {},
+        "cost_indicators": [],
+    }
+    adapters.return_value = {
+        "resources": [resource],
+        "errors": [],
+        "coverage": {
+            "registered": ["lambda"],
+            "selected": ["lambda"],
+            "executed": ["lambda"],
+            "failed": [],
+            "operations_executed": [],
+        },
     }
     explorer.return_value = {
         "resources": [
@@ -117,6 +138,7 @@ def test_general_inventory_scans_enabled_regions_and_deduplicates(
     assert result["coverage"]["status"] == "complete_for_supported_resources"
 
 
+@patch("aws_resource_mcp.aws.inventory.execute_adapters")
 @patch("aws_resource_mcp.aws.inventory.discover_with_resource_explorer")
 @patch("aws_resource_mcp.aws.inventory.list_aws_regions")
 @patch("aws_resource_mcp.aws.inventory.get_aws_identity")
@@ -124,6 +146,7 @@ def test_general_inventory_filters_service_and_region(
     identity: Mock,
     regions: Mock,
     explorer: Mock,
+    adapters: Mock,
 ) -> None:
     identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
     regions.return_value = [{"name": "eu-west-1", "enabled": True}]
@@ -138,6 +161,14 @@ def test_general_inventory_filters_service_and_region(
         },
         "errors": [],
     }
+    adapters.return_value = {
+        "resources": [],
+        "errors": [],
+        "coverage": {
+            "registered": [], "selected": [], "executed": [], "failed": [],
+            "operations_executed": [],
+        },
+    }
     result = collect_general_aws_inventory(
         region="eu-west-1",
         services=["lambda"],
@@ -151,6 +182,7 @@ def test_general_inventory_filters_service_and_region(
     assert result["coverage"]["status"] == "partial"
 
 
+@patch("aws_resource_mcp.aws.inventory.execute_adapters")
 @patch("aws_resource_mcp.aws.inventory.discover_with_resource_explorer")
 @patch("aws_resource_mcp.aws.inventory.list_aws_regions")
 @patch("aws_resource_mcp.aws.inventory.get_aws_identity")
@@ -158,6 +190,7 @@ def test_general_inventory_region_failure_reports_unavailable_coverage(
     identity: Mock,
     regions: Mock,
     explorer: Mock,
+    adapters: Mock,
 ) -> None:
     identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
     regions.side_effect = ClientError(
@@ -175,9 +208,52 @@ def test_general_inventory_region_failure_reports_unavailable_coverage(
         },
         "errors": [],
     }
+    adapters.return_value = {
+        "resources": [],
+        "errors": [],
+        "coverage": {
+            "registered": [], "selected": [], "executed": [], "failed": [],
+            "operations_executed": [],
+        },
+    }
     result = collect_general_aws_inventory(session=Mock())
 
     assert result["services"] == {}
     assert result["resources"] == []
     assert result["coverage"]["status"] == "unavailable"
     assert any(error["service"] == "ec2" for error in result["errors"])
+
+
+@patch("aws_resource_mcp.aws.inventory.execute_adapters")
+@patch("aws_resource_mcp.aws.inventory.discover_with_resource_explorer")
+@patch("aws_resource_mcp.aws.inventory.list_aws_regions")
+@patch("aws_resource_mcp.aws.inventory.get_aws_identity")
+def test_uniform_adapter_fallback_makes_unavailable_general_discovery_partial(
+    identity: Mock,
+    regions: Mock,
+    explorer: Mock,
+    adapters: Mock,
+) -> None:
+    identity.return_value = {"account_id": "account", "arn": "arn", "user_id": "user"}
+    regions.return_value = [{"name": "eu-west-1", "enabled": True}]
+    explorer.return_value = {
+        "resources": [],
+        "coverage": {
+            "available": False, "aggregator_index": False, "regions_indexed": [],
+            "permission_errors": [], "limitations": ["not configured"],
+        },
+        "errors": [],
+    }
+    adapters.return_value = {
+        "resources": [], "errors": [],
+        "coverage": {
+            "registered": ["lambda", "ec2"], "selected": ["lambda", "ec2"],
+            "executed": ["lambda", "ec2"], "failed": [], "operations_executed": [],
+        },
+    }
+
+    result = collect_general_aws_inventory(session=Mock())
+
+    assert result["coverage"]["status"] == "partial"
+    assert result["coverage"]["adapters"]["executed"] == ["lambda", "ec2"]
+    assert "uniform fallback" in result["coverage"]["resource_explorer"]["limitations"][-1]

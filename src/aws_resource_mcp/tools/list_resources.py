@@ -6,15 +6,7 @@ from typing import Any
 from aws_resource_mcp.aws.errors import AWSInventoryGlobalError
 from aws_resource_mcp.aws.inventory import collect_general_aws_inventory
 from aws_resource_mcp.config import DEFAULT_AWS_REGION
-
-SENSITIVE_FIELD_NAMES = frozenset(
-    {
-        "aws_access_key_id",
-        "aws_secret_access_key",
-        "session_token",
-        "credentials",
-    }
-)
+from aws_resource_mcp.models import remove_sensitive_fields
 
 
 def _error_response(
@@ -72,18 +64,6 @@ def _normalize_resource_types(resource_types: list[str] | None) -> list[str]:
     return normalized
 
 
-def _remove_sensitive_fields(value: Any) -> Any:
-    if isinstance(value, dict):
-        return {
-            key: _remove_sensitive_fields(item)
-            for key, item in value.items()
-            if key.lower() not in SENSITIVE_FIELD_NAMES
-        }
-    if isinstance(value, list):
-        return [_remove_sensitive_fields(item) for item in value]
-    return value
-
-
 def _remove_account_ids(value: Any) -> Any:
     if isinstance(value, dict):
         return {
@@ -103,12 +83,16 @@ def listar_recursos_aws(
     resource_types: list[str] | None = None,
     query: str | None = None,
     all_regions: bool = True,
+    include_details: bool = True,
+    include_cost_indicators: bool = True,
+    confirm_potentially_billable_operations: bool = False,
 ) -> dict[str, Any]:
     """Discover AWS resources through locally available credentials, read-only.
 
     Uses Resource Explorer for uniform, multi-Region discovery. Every service is
     represented with the same resource model and discovery path. Filter by
-    service, resource type, Region, or search text. Coverage
+    service, resource type, Region, or search text. Optional details and
+    potential-cost indicators use the same model for every service. Coverage
     depends on accessible Resource Explorer indexes, views, Regions, and IAM
     permissions, so the response always includes a coverage diagnosis and may be
     partial. Set ``include_account_id`` to false to anonymize the account. This
@@ -144,6 +128,22 @@ def listar_recursos_aws(
             "query must be null or a string",
         )
     normalized_query = query.strip() if query and query.strip() else None
+    if not isinstance(all_regions, bool):
+        return _error_response(
+            normalized_region or DEFAULT_AWS_REGION,
+            "invalid_filters",
+            "all_regions must be a boolean",
+        )
+    if (
+        not isinstance(include_details, bool)
+        or not isinstance(include_cost_indicators, bool)
+        or not isinstance(confirm_potentially_billable_operations, bool)
+    ):
+        return _error_response(
+            normalized_region or DEFAULT_AWS_REGION,
+            "invalid_filters",
+            "detail, cost-indicator, and operation-confirmation flags must be booleans",
+        )
 
     try:
         inventory = collect_general_aws_inventory(
@@ -152,6 +152,11 @@ def listar_recursos_aws(
             resource_types=requested_types or None,
             query=normalized_query,
             all_regions=all_regions,
+            include_details=include_details,
+            include_cost_indicators=include_cost_indicators,
+            confirm_potentially_billable_operations=(
+                confirm_potentially_billable_operations
+            ),
         )
     except AWSInventoryGlobalError as error:
         return _error_response(
@@ -188,11 +193,14 @@ def listar_recursos_aws(
         or inventory.get("coverage", {}).get("status")
         != "complete_for_supported_resources",
     }
+    adapter_coverage = inventory.get("coverage", {}).get("adapters", {})
+    summary["adapters_executed"] = adapter_coverage.get("executed", [])
+    summary["adapters_failed"] = adapter_coverage.get("failed", [])
     account_id = inventory.get("account", {}).get("account_id")
     if include_account_id and account_id:
         summary["account_id"] = account_id
     status = "partial" if summary["partial"] else "ok"
-    response = _remove_sensitive_fields(
+    response = remove_sensitive_fields(
         {
             "status": status,
             "summary": summary,

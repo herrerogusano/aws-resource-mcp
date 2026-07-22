@@ -77,6 +77,9 @@ def test_service_filtering_and_normalization(
         resource_types=None,
         query=None,
         all_regions=True,
+        include_details=True,
+        include_cost_indicators=True,
+        confirm_potentially_billable_operations=False,
     )
 
 
@@ -89,6 +92,9 @@ def test_region_type_query_and_all_regions_filters(collect: Mock) -> None:
         resource_types=["ec2:instance"],
         query="web",
         all_regions=False,
+        include_details=True,
+        include_cost_indicators=True,
+        confirm_potentially_billable_operations=False,
     )
     collect.assert_called_once_with(
         "eu-central-1",
@@ -96,6 +102,9 @@ def test_region_type_query_and_all_regions_filters(collect: Mock) -> None:
         resource_types=["ec2:instance"],
         query="web",
         all_regions=False,
+        include_details=True,
+        include_cost_indicators=True,
+        confirm_potentially_billable_operations=False,
     )
 
 
@@ -116,7 +125,26 @@ def test_invalid_region_type_and_query_return_controlled_errors(collect: Mock) -
     assert listar_recursos_aws(resource_types=[])["status"] == "error"
     assert listar_recursos_aws(resource_types=["not valid"])["status"] == "error"
     assert listar_recursos_aws(query=123)["status"] == "error"
+    assert listar_recursos_aws(include_details="yes")["status"] == "error"
+    assert listar_recursos_aws(include_cost_indicators=1)["status"] == "error"
+    assert listar_recursos_aws(
+        confirm_potentially_billable_operations="yes"
+    )["status"] == "error"
     collect.assert_not_called()
+
+
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_detail_and_cost_flags_are_uniformly_forwarded(collect: Mock) -> None:
+    collect.return_value = inventory()
+    listar_recursos_aws(
+        services=["rds"],
+        include_details=False,
+        include_cost_indicators=False,
+        confirm_potentially_billable_operations=True,
+    )
+    assert collect.call_args.kwargs["include_details"] is False
+    assert collect.call_args.kwargs["include_cost_indicators"] is False
+    assert collect.call_args.kwargs["confirm_potentially_billable_operations"] is True
 
 
 @patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
