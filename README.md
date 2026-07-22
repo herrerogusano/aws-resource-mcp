@@ -4,7 +4,7 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La Fase 2 está completada. El proyecto incluye un servidor MCP mínimo y una capa Python independiente que consulta un inventario AWS de solo lectura mediante Boto3. El inventario todavía no está expuesto como tool MCP.
+La Fase 3 está completada. El servidor MCP expone un diagnóstico local y un inventario AWS de solo lectura mediante Boto3.
 
 ## Alcance previsto
 
@@ -70,11 +70,33 @@ uv run python -m aws_resource_mcp.aws.inventory --region eu-central-1 --profile 
 
 No se guardan claves en el proyecto. Boto3 usa su cadena estándar de resolución de credenciales; si se indica `AWS_PROFILE` o `--profile`, solo se selecciona un perfil que ya debe existir fuera del repositorio.
 
-## Tool `health_check`
+## Tools MCP
+
+### `health_check`
 
 `health_check()` no recibe parámetros ni usa red, credenciales o AWS. Devuelve una respuesta estable con el estado del servidor, su nombre y un mensaje de diagnóstico.
 
-El servidor MCP continúa exponiendo únicamente `health_check`. La capa AWS se integrará con MCP en la Fase 3.
+### `listar_recursos_aws`
+
+Consulta el inventario AWS disponible para las credenciales locales sin modificar recursos. Parámetros:
+
+- `region`: región para servicios regionales como Lambda; por defecto `eu-west-1`.
+- `services`: lista opcional con `lambda`, `s3` o ambos. Sin valor consulta ambos servicios.
+- `include_account_id`: permite omitir el ID de cuenta de la respuesta para facilitar su anonimización.
+
+Ejemplo de argumentos enviados por un cliente MCP:
+
+```json
+{
+  "region": "eu-west-1",
+  "services": ["lambda", "s3"],
+  "include_account_id": false
+}
+```
+
+Una respuesta `ok` contiene todo el inventario solicitado; `partial` conserva resultados aunque falle un servicio; `error` representa un problema global o parámetros inválidos. El resumen incluye región, contadores y si el resultado es parcial.
+
+S3 se consulta a nivel de cuenta y cada bucket conserva su propia región. El parámetro `region` afecta principalmente a Lambda. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura. `revisar_free_tier` se añadirá en la siguiente fase.
 
 ## Inventario AWS
 
