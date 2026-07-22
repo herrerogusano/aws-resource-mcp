@@ -147,6 +147,28 @@ def test_detail_and_cost_flags_are_uniformly_forwarded(collect: Mock) -> None:
     assert collect.call_args.kwargs["confirm_potentially_billable_operations"] is True
 
 
+@patch("aws_resource_mcp.tools.list_resources.attach_free_activity_summaries")
+@patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
+def test_activity_summary_uses_only_existing_inventory_fields(
+    collect: Mock, attach: Mock
+) -> None:
+    item = {"service": "ec2", "name": "instance", "activity": {"status": "unknown"}}
+    collect.return_value = inventory(general=[item])
+    attach.return_value = [{
+        **item,
+        "activity": {
+            "status": "active", "source": "ec2_api",
+            "paid_data_executed": False,
+        },
+    }]
+
+    result = listar_recursos_aws(include_activity_summary=True)
+
+    attach.assert_called_once_with([item])
+    assert result["all_resources"][0]["activity"]["status"] == "active"
+    assert result["resources"]["ec2"] == result["all_resources"]
+
+
 @patch("aws_resource_mcp.tools.list_resources.collect_general_aws_inventory")
 def test_partial_coverage_and_service_error_are_preserved(collect: Mock) -> None:
     collect.return_value = inventory(

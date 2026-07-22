@@ -3,6 +3,7 @@
 import re
 from typing import Any
 
+from aws_resource_mcp.activity.engine import attach_free_activity_summaries
 from aws_resource_mcp.aws.errors import AWSInventoryGlobalError
 from aws_resource_mcp.aws.inventory import collect_general_aws_inventory
 from aws_resource_mcp.config import DEFAULT_AWS_REGION
@@ -86,13 +87,16 @@ def listar_recursos_aws(
     include_details: bool = True,
     include_cost_indicators: bool = True,
     confirm_potentially_billable_operations: bool = False,
+    include_activity_summary: bool = False,
 ) -> dict[str, Any]:
     """Discover AWS resources through locally available credentials, read-only.
 
     Uses Resource Explorer for uniform, multi-Region discovery. Every service is
     represented with the same resource model and discovery path. Filter by
     service, resource type, Region, or search text. Optional details and
-    potential-cost indicators use the same model for every service. Coverage
+    potential-cost indicators use the same model for every service. An optional
+    activity summary uses only fields already returned by those service APIs;
+    it does not run CloudTrail analysis or CloudWatch queries. Coverage
     depends on accessible Resource Explorer indexes, views, Regions, and IAM
     permissions, so the response always includes a coverage diagnosis and may be
     partial. Set ``include_account_id`` to false to anonymize the account. This
@@ -138,11 +142,12 @@ def listar_recursos_aws(
         not isinstance(include_details, bool)
         or not isinstance(include_cost_indicators, bool)
         or not isinstance(confirm_potentially_billable_operations, bool)
+        or not isinstance(include_activity_summary, bool)
     ):
         return _error_response(
             normalized_region or DEFAULT_AWS_REGION,
             "invalid_filters",
-            "detail, cost-indicator, and operation-confirmation flags must be booleans",
+            "detail, cost, activity-summary, and confirmation flags must be booleans",
         )
 
     try:
@@ -176,6 +181,14 @@ def listar_recursos_aws(
     resources = inventory.get("services", {})
     all_resources = inventory.get("resources", [])
     resources_by_service = inventory.get("resources_by_service", {})
+    if include_activity_summary:
+        all_resources = attach_free_activity_summaries(all_resources)
+        resources_by_service = {}
+        for resource in all_resources:
+            resources_by_service.setdefault(
+                resource.get("service", "unknown"), []
+            ).append(resource)
+        resources = resources_by_service
     inventory_errors = [
         {
             "service": error.get("service", "aws"),
