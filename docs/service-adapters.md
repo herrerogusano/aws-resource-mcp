@@ -83,3 +83,10 @@ risk_level + priority_score + evidence + limitations + recommendations
 ```
 
 Lambda, S3, EC2, RDS y los demás no tienen rutas económicas especiales. Free Tier es una fuente de cuenta/oferta separada; Cost Explorer es una fuente agregada separada y consentida. Ninguna de ellas altera el contrato del adaptador ni evita el guard central.
+## Cobertura IAM uniforme
+
+Cada operación declarada por un adaptador debe existir en el registro central,
+tener acciones IAM verificadas, pertenecer al componente `adapter:<servicio>` y
+estar cubierta por una política de ejecución. La validación se aplica por igual
+a Lambda, S3, EC2, RDS y los demás adaptadores; ninguno puede crear una ruta
+Boto3 directa ni mantener permisos fuera del manifiesto.

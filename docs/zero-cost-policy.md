@@ -88,3 +88,10 @@ Referencias oficiales:
 - [AWS Free Tier API at no cost](https://aws.amazon.com/about-aws/whats-new/2023/11/aws-free-tier-usage-getfreetierusage-api/)
 - [Tracking AWS Free Tier usage](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/tracking-free-tier-usage.html)
 - [AWS Cost Explorer pricing](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/)
+## Relación con IAM
+
+La política `free-only` contiene únicamente operaciones clasificadas como
+gratuitas. La política `consented-readonly` puede habilitar técnicamente
+operaciones contabilizables, pero no cambia el modo económico ni omite el
+consentimiento efímero. Operaciones con coste desconocido no entran en ninguna
+política de ejecución.
