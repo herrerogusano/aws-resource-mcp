@@ -69,3 +69,17 @@ Todos los adaptadores implementan `get_free_activity_signals(resources, context)
 El motor común correlaciona después estas señales con eventos CloudTrail normalizados. Lambda, S3, EC2, RDS y el resto atraviesan exactamente el mismo registro, método, clasificador, política de costes, modelo de error y construcción de resultados.
 
 Tests arquitectónicos comparan la estructura diagnóstica y verifican que los adaptadores no importan ni administran consentimiento. S3, SQS y SNS pueden quedar `operation_pending_consent`, pero no reciben rutas diagnósticas o de ejecución especiales.
+
+## Contrato económico
+
+Los adaptadores siguen produciendo únicamente `cost_indicators`. No consultan Free Tier, Cost Explorer ni precios y no afirman gasto real. El motor económico consume el mismo modelo para todos:
+
+```text
+Resource.cost_indicators + Resource.activity
+        ↓
+economics/risk.py
+        ↓
+risk_level + priority_score + evidence + limitations + recommendations
+```
+
+Lambda, S3, EC2, RDS y los demás no tienen rutas económicas especiales. Free Tier es una fuente de cuenta/oferta separada; Cost Explorer es una fuente agregada separada y consentida. Ninguna de ellas altera el contrato del adaptador ni evita el guard central.

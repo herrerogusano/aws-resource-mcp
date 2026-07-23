@@ -1,6 +1,6 @@
 # Arquitectura
 
-## Estado en la Fase 7.5
+## Estado en la Fase 8
 
 El proyecto es un servidor MCP local escrito en Python. Un cliente MCP lo inicia como proceso local y se comunica con él mediante transporte `stdio`.
 
@@ -25,6 +25,13 @@ FastMCP server
                     ├── common adapter registry
                     ├── activity-source availability
                     └── zero-cost operation registry
+    ├── analizar_riesgo_costes
+    │       └── normalized resources + activity + economic engine
+    ├── revisar_free_tier
+    │       └── guarded free Free Tier APIs
+    └── consultar_costes_aws
+            └── exact ephemeral consent
+                    └── one guarded Cost Explorer request
 ```
 
 FastMCP crea el servidor, registra las tools y gestiona el protocolo MCP. Cada tool mantiene su lógica de entrada y presentación separada de `server.py`.
@@ -67,6 +74,19 @@ El modelo raíz es idéntico para todos. Las diferencias válidas se limitan a `
 
 `InventoryConsentStore` vive únicamente en el proceso MCP. Sus registros expiran, son de un solo uso y guardan hashes de identidad y scope. El inventario provisional se normaliza, anonimiza y limpia de campos sensibles.
 
+## Pipeline económico
+
+```text
+recursos normalizados ──> indicadores potenciales ──┐
+actividad común ─────────────────────────────────────┼─> riesgo + prioridad
+Free Tier API gratuita ──────────────────────────────┤
+Cost Explorer ──> consentimiento exacto ──> 1 página┘
+```
+
+`economics/risk.py` no conoce servicios concretos: recibe el mismo `Resource` para Lambda, S3, EC2, RDS y el resto. La actividad se fusiona por identidad normalizada. Free Tier permanece a nivel de cuenta/oferta y no se atribuye artificialmente a un recurso.
+
+El consentimiento de Cost Explorer extiende el store efímero existente mediante un tipo de solicitud. La primera llamada crea estado local sin AWS. En la aprobación, STS vincula la identidad efectiva, el guard autoriza solo `ce:GetCostAndUsage` y el grant se consume antes de la petición. El estado se destruye al terminar o cancelar. Una continuación conserva el token solo en memoria y crea otro consentimiento.
+
 ## Pipeline de actividad
 
 ```text
@@ -88,11 +108,11 @@ Los límites predeterminados son 100 recursos, 5 regiones, 20 evidencias por rec
 
 ## Límites actuales
 
-CloudTrail Event History contiene como máximo 90 días de eventos de administración regionales. No equivale a telemetría funcional ni suele incluir eventos de datos como `GetObject`. CloudWatch está preparado como enriquecimiento, pero sus operaciones permanecen bloqueadas por coste. Tampoco se implementan costes reales, estado de Free Tier, `revisar_free_tier`, políticas IAM definitivas ni transportes HTTP. La capa solo realiza consultas de lectura y no configura Resource Explorer, trails ni event data stores.
+CloudTrail Event History contiene como máximo 90 días de eventos de administración regionales. No equivale a telemetría funcional ni suele incluir eventos de datos como `GetObject`. CloudWatch está preparado como enriquecimiento, pero sus operaciones permanecen bloqueadas por coste. Cost Explorer solo ofrece coste agregado por periodo y servicio en esta fase; no hay forecast, detalle por recurso, billing views personalizadas ni linked accounts. Tampoco se implementan políticas IAM definitivas ni transportes HTTP. La capa solo realiza consultas de lectura y no configura Resource Explorer, trails ni event data stores.
 
 ## Principios
 
 - Ejecución local: no hay despliegue en AWS.
 - Solo lectura y mínimo privilegio para cualquier acceso futuro a AWS.
 - Configuración de credenciales fuera del repositorio.
-- Sin uso de Cost Explorer.
+- Cost Explorer únicamente tras consentimiento efímero exacto y con coste máximo visible.

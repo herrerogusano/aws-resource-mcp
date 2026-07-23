@@ -1,5 +1,7 @@
 # Diagnóstico y cobertura
 
+La dimensión `economics` declara, sin ejecutar consultas económicas, que el análisis local de riesgo está disponible, que las dos APIs Free Tier son lecturas gratuitas y que Cost Explorer exige consentimiento explícito. El diagnóstico no llama a Free Tier ni a Cost Explorer; sus contadores facturables permanecen en cero.
+
 ## Salud y cobertura no son equivalentes
 
 `health_check` responde si el servidor local, sus registros y su configuración segura pueden funcionar. `diagnosticar_cobertura_aws` responde qué parte de AWS puede examinar y por qué la cobertura puede ser parcial.

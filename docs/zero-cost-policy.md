@@ -24,7 +24,7 @@ El guard se ejecuta antes de cada llamada Boto3. Una operación bloqueada devuel
 
 S3 cobra peticiones GET, LIST y otras peticiones; SQS contabiliza cada acción; SNS contabiliza operaciones de propietario y suscripción. Por eso sus operaciones directas se clasifican como potencialmente facturables. Resource Explorer está disponible sin coste adicional para búsquedas básicas, aunque AWS advierte que llamadas a otros servicios pueden generar cargos.
 
-Esta política no determina gasto real, saldo de Free Tier ni elegibilidad. Tampoco usa Cost Explorer, Free Tier API, AWS Config ni estimaciones.
+Esta política no convierte señales en gasto real ni garantiza elegibilidad. Free Tier se consulta únicamente mediante operaciones documentadas sin coste. Cost Explorer permanece bloqueado hasta recibir un grant exacto.
 
 ## Actividad en la Fase 6
 
@@ -48,6 +48,34 @@ Una aprobación crea un grant de una sola ejecución. No autoriza automáticamen
 
 La política no garantiza coste cero: garantiza que las operaciones medibles no se ejecutan sin consentimiento explícito y acotado. Nunca se listan objetos, reciben mensajes ni publican contenidos.
 
+## Economía en la Fase 8
+
+Operaciones gratuitas:
+
+| Operación | Acceso | Clasificación | `free-only` |
+|---|---|---|---|
+| `freetier:GetFreeTierUsage` | read | free | habilitada |
+| `freetier:GetAccountPlanState` | read | free | habilitada |
+
+AWS documenta el acceso programático a Free Tier y al estado del plan sin coste. La evidencia se verificó el 2026-07-23. Estas llamadas no consultan facturas ni prueban que un recurso sea gratuito.
+
+Operaciones potencialmente facturables:
+
+| Operación | Estado en esta fase |
+|---|---|
+| `ce:GetCostAndUsage` | implementada solo con consentimiento exacto |
+| `ce:GetCostForecast` | registrada y bloqueada; no implementada |
+| `ce:GetCostAndUsageWithResources` | registrada y bloqueada; no implementada |
+
+AWS publica 0,01 USD por petición de la API Cost Explorer sobre la vista principal. La primera llamada de `consultar_costes_aws` ejecuta cero llamadas AWS y muestra un máximo de una petición y 0,01 USD. La aprobación no cambia el modo global, no persiste, no autoriza otra página y no usa billing views personalizadas.
+
+Los dos contadores permanecen separados:
+
+- `potentially_billable_operations_executed`: tipos de operación potencialmente facturable realmente ejecutados;
+- `billable_operations_executed`: peticiones SDK realizadas bajo consentimiento.
+
+Por defecto ambos son cero. En una aprobación válida de una página de Cost Explorer ambos reflejan una única petición `GetCostAndUsage`.
+
 Referencias oficiales:
 
 - [AWS Resource Explorer pricing](https://aws.amazon.com/resourceexplorer/pricing/)
@@ -57,3 +85,6 @@ Referencias oficiales:
 - [AWS CloudTrail Event History](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/view-cloudtrail-events.html)
 - [AWS CloudTrail pricing](https://aws.amazon.com/cloudtrail/pricing/)
 - [Amazon CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/)
+- [AWS Free Tier API at no cost](https://aws.amazon.com/about-aws/whats-new/2023/11/aws-free-tier-usage-getfreetierusage-api/)
+- [Tracking AWS Free Tier usage](https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/tracking-free-tier-usage.html)
+- [AWS Cost Explorer pricing](https://aws.amazon.com/aws-cost-management/aws-cost-explorer/pricing/)

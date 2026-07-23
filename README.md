@@ -4,16 +4,16 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La fase correctiva 7.5 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad, diagnóstico explícito y finalización del inventario mediante consentimiento puntual.
+La fase 8 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad, diagnóstico explícito, análisis de riesgo económico, Free Tier gratuito y consultas de coste real con consentimiento puntual.
 
 ## Alcance previsto
 
 - Transporte MCP local mediante `stdio`.
 - Región principal: `eu-west-1`.
 - Consultas de AWS exclusivamente de lectura y bajo mínimo privilegio.
-- Tools disponibles: `health_check()`, `listar_recursos_aws()`, `analizar_actividad_recursos()` y `diagnosticar_cobertura_aws()`.
-- Tool prevista: `revisar_free_tier()`.
-- Sin Cost Explorer, despliegue en AWS ni CD.
+- Tools disponibles: `health_check()`, `listar_recursos_aws()`, `analizar_actividad_recursos()`, `diagnosticar_cobertura_aws()`, `analizar_riesgo_costes()`, `revisar_free_tier()` y `consultar_costes_aws()`.
+- Cost Explorer está bloqueado hasta recibir consentimiento efímero para una petición exacta.
+- Sin despliegue en AWS ni CD.
 
 ## Desarrollo
 
@@ -157,6 +157,22 @@ Ejemplo:
 
 Las limitaciones indican impacto, si el MCP puede continuar, si faltan permisos, si resolverlas exigiría escritura y si podría existir coste. El diagnóstico nunca realiza la acción sugerida.
 
+### `analizar_riesgo_costes`
+
+Prioriza recursos mediante los indicadores del inventario y, opcionalmente, el pipeline común de actividad. Devuelve `none_detected`, `low`, `medium`, `high`, `critical` o `unknown`, una puntuación explicable y recomendaciones no ejecutables. Una señal no confirma gasto y `none_detected` no significa coste cero.
+
+`include_free_tier=true` añade datos oficiales de Free Tier. `include_actual_cost=true` solo prepara un consentimiento de Cost Explorer: no realiza la consulta.
+
+### `revisar_free_tier`
+
+Consulta `GetFreeTierUsage` y `GetAccountPlanState`, operaciones que AWS documenta sin coste. Separa límites mensuales, previsión, plan y créditos. Puede devolver información parcial o desconocida por permisos, retraso de actualización, agotamiento de una oferta o diferencias de elegibilidad. No afirma que un recurso concreto sea gratuito.
+
+### `consultar_costes_aws`
+
+Prepara una consulta agregada `GetCostAndUsage` para un periodo y filtros exactos. La primera llamada ejecuta cero operaciones AWS y devuelve una solicitud efímera con el precio publicado de 0,01 USD por petición sobre la vista principal. Una segunda llamada con `consent_action="approve"` ejecuta como máximo una página; cada página adicional exige un consentimiento nuevo. `cancel` no llama a AWS.
+
+La granularidad puede ser `MONTHLY` o `DAILY`; `end_date` es exclusiva. Forecast, detalle por recurso, linked accounts y billing views personalizadas no se implementan en esta fase.
+
 ## Inventario AWS
 
 Boto3 es el SDK oficial de AWS para Python. La capa de inventario utiliza:
@@ -188,3 +204,4 @@ Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista 
 - [Análisis de actividad](docs/activity-analysis.md)
 - [Diagnóstico y cobertura](docs/diagnostics-and-coverage.md)
 - [Flujo de consentimiento del inventario](docs/inventory-consent-flow.md)
+- [Análisis económico, Free Tier y costes reales](docs/economic-analysis.md)

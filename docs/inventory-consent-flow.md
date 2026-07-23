@@ -1,5 +1,7 @@
 # Flujo de consentimiento del inventario
 
+El store efímero se reutiliza en la fase 8 mediante un tipo de consentimiento separado para Cost Explorer. No se mezclan scopes: un ID de inventario no autoriza costes y un ID económico no autoriza adaptadores. El flujo económico se documenta en [economic-analysis.md](economic-analysis.md).
+
 ## Problema
 
 La política `free-only` bloqueaba correctamente operaciones que AWS puede contabilizar, pero la respuesta podía interpretarse como si S3, SQS o SNS estuvieran vacíos. El inventario ahora distingue entre «consultado y vacío» y «no consultado porque requiere consentimiento».

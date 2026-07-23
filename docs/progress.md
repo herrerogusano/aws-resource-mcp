@@ -2,9 +2,20 @@
 
 ## Estado actual
 
-Fase correctiva 7.5 implementada: inventario parcial inmediato y finalización mediante consentimiento puntual sin abandonar `free-only`.
+Fase 8 implementada: análisis de riesgo potencial, Free Tier gratuito y coste real agregado mediante consentimiento puntual sin abandonar `free-only`.
 
 ## Incluido
+
+- Modelo económico común con riesgo, prioridad, coste real, Free Tier, evidencia, limitaciones y recomendaciones.
+- Tool `analizar_riesgo_costes`, que reutiliza inventario y actividad sin presentar indicadores como gasto confirmado.
+- Tools `revisar_free_tier` y `consultar_costes_aws`; el registro MCP contiene siete tools.
+- `GetFreeTierUsage` y `GetAccountPlanState` registrados como lecturas gratuitas con evidencia oficial fechada.
+- `GetCostAndUsage`, forecast y detalle por recurso registrados como potencialmente facturables.
+- Primera llamada de Cost Explorer sin sesión Boto3 ni llamadas AWS; muestra scope, una petición máxima y estimación de 0,01 USD.
+- Grant de Cost Explorer efímero, de un uso, una página y scope exacto; cada continuación exige otra aprobación.
+- Identidad vinculada al ejecutar, tokens ocultos, estado sensible destruido y auditoría anonimizada.
+- Forecast y detalle por recurso rechazados como operaciones separadas no implementadas, sin ampliar consentimientos.
+- Diagnóstico y health check con capacidades económicas y contadores facturables separados.
 
 - Estados explícitos para inventario completo, consentimiento pendiente, timeout, permisos denegados y fuentes no disponibles.
 - Solicitudes en memoria con expiración de cinco minutos, identidad y scope vinculados, cancelación y uso único.
@@ -49,7 +60,9 @@ uv run pytest -q
 uv run python -m compileall -q src
 ```
 
-206 tests pasan. No se conectan a AWS y cubren también salud, STS, anonimización, Resource Explorer, adaptadores, actividad, consentimiento, expiración, uso único, identidad, scope, límites, paginación, timeout, deduplicación, filtros, serialización y registro MCP.
+226 tests pasan. No se conectan a AWS y cubren también salud, STS, anonimización, Resource Explorer, adaptadores, actividad, consentimiento, expiración, uso único, identidad, scope, límites, paginación, timeout, deduplicación, filtros, serialización, riesgo económico, Free Tier, Cost Explorer bloqueado/consentido y registro MCP.
+
+La comprobación manual anonimizada del 2026-07-23 ejecutó únicamente operaciones gratuitas. Free Tier devolvió un plan activo de tipo `paid`, 9 ofertas visibles y las 9 `within_limit`; se consultó una página completa con `GetAccountPlanState` y `GetFreeTierUsage`. Un análisis limitado a Lambda/EC2 en `eu-west-1` revisó 7 recursos: la muestra no contenía indicadores potenciales y quedó `none_detected`, que no equivale a coste cero. La primera llamada local de Cost Explorer produjo `pending_consent`, una petición máxima y 0,01 USD estimados. No se aprobó. Operaciones facturables ejecutadas: 0.
 
 Un cliente MCP nuevo por `stdio` confirmó los tres campos de consentimiento en el esquema. La primera llamada real, limitada a una región y anonimizada, conservó 18 recursos de cuatro servicios y devolvió S3, SQS y SNS como pendientes. Cada enumeración indicó un máximo de una petición; se ejecutaron 0 operaciones potencialmente facturables y 0 peticiones de ese tipo. No se realizó la segunda llamada.
 
@@ -64,7 +77,7 @@ No se guardaron identificadores, nombres de recursos, identidad AWS, IPs, access
 ## Pendiente
 
 - Prueba real limitada de la segunda llamada, después de mostrar y recibir aprobación explícita para su alcance.
-- Fase 8: tool `revisar_free_tier` sin Cost Explorer.
+- Consulta real de Cost Explorer únicamente si el usuario aprueba después el scope y el coste máximo mostrados.
 - Política IAM mínima formal, CI e integración final con cliente MCP en fases posteriores.
 - Una futura mejora con métricas funcionales requerirá consentimiento efímero limitado por operación, recursos, periodo y número de consultas.
 

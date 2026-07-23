@@ -239,3 +239,45 @@
 **Decisión:** guardar durante cinco minutos únicamente recursos normalizados y anonimizados, scope, operaciones pendientes y tokens. No se conservan respuestas Boto3 crudas ni identidad legible.
 
 **Motivo:** permite reanudar sin repetir trabajo y reduce exposición de datos.
+
+## D-041 — Tres niveles económicos separados
+
+**Decisión:** modelar por separado riesgo potencial, estado Free Tier y coste real. `none_detected`, `within_limit` y `zero_reported` no son intercambiables.
+
+**Motivo:** cada dato responde a una pregunta distinta y combinarlos produciría falsas garantías de coste cero.
+
+## D-042 — Free Tier gratuito con evidencia oficial
+
+**Decisión:** registrar `GetFreeTierUsage` y `GetAccountPlanState` como lecturas `free`, con evidencia oficial y fecha de verificación. Si AWS deja de documentarlas sin coste, su clasificación deberá revisarse.
+
+**Motivo:** la política exige evidencia positiva; la ausencia de un precio no habría sido suficiente.
+
+## D-043 — Cost Explorer nunca implícito
+
+**Decisión:** clasificar `GetCostAndUsage`, `GetCostForecast` y `GetCostAndUsageWithResources` como `potentially_billable`. `include_actual_cost=true` solo crea una solicitud; no concede consentimiento.
+
+**Motivo:** AWS publica un precio por petición y una intención informativa no equivale a aceptar un cargo.
+
+## D-044 — Una petición y una página por consentimiento
+
+**Decisión:** limitar el MVP a `GetCostAndUsage`, una página y una petición sobre la vista principal. Una continuación genera otro consentimiento; forecast y detalle por recurso son operaciones separadas no implementadas.
+
+**Motivo:** el coste y el scope siguen siendo comprensibles, verificables y revocables antes de cada petición.
+
+## D-045 — Primera llamada de costes sin AWS
+
+**Decisión:** crear la solicitud de Cost Explorer sin sesión Boto3, STS ni llamada de red. La identidad se obtiene y vincula únicamente tras aprobar, inmediatamente antes de consumir el grant.
+
+**Motivo:** garantiza que pedir precio y alcance no produzca el propio cargo que se intenta autorizar.
+
+## D-046 — Minimización de datos económicos
+
+**Decisión:** devolver periodos, servicio opcional, importe, moneda y marca de estimación. Omitir cuentas vinculadas, billing view ARN, identidad, medios de pago, impuestos y respuestas crudas.
+
+**Motivo:** esos campos no son necesarios para responder la consulta agregada y amplían innecesariamente la exposición.
+
+## D-047 — Scoring uniforme y explicable
+
+**Decisión:** puntuar cualquier recurso desde los mismos `cost_indicators` y el mismo estado de actividad, sin reglas directas para Lambda o S3.
+
+**Motivo:** preserva la arquitectura uniforme y permite explicar cada aumento de prioridad sin inventar gasto real.
