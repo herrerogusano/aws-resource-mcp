@@ -20,6 +20,8 @@
 
 Todos implementan el mismo contrato, se seleccionan con el mismo filtro y se ejecutan mediante el mismo motor. Cada adaptador declara operaciones, tipos, alcance, capacidades, campos de detalle e indicadores.
 
+El diagnóstico de cobertura lee ese mismo registro. Para cada adaptador informa alcance, descubrimiento, enriquecimiento, indicadores, señales gratuitas de actividad, operaciones requeridas, permitidas y bloqueadas, regiones aplicables y limitaciones. No ejecuta un inventario para probar permisos.
+
 Lambda y S3 se implementaron antes que los demás, pero fueron migrados al registro. No existen imports desde la tool, listas legacy, respuestas raíz especiales, deduplicación privada ni fallback exclusivo.
 
 ## Modelo producido
@@ -57,3 +59,5 @@ Todos los adaptadores implementan `get_free_activity_signals(resources, context)
 - S3 no lista objetos ni afirma conocer su último acceso; SQS no recibe mensajes; SNS no publica; DynamoDB no ejecuta `Scan` ni `Query`; RDS no abre conexiones.
 
 El motor común correlaciona después estas señales con eventos CloudTrail normalizados. Lambda, S3, EC2, RDS y el resto atraviesan exactamente el mismo registro, método, clasificador, política de costes, modelo de error y construcción de resultados.
+
+Un test arquitectónico compara la estructura diagnóstica de Lambda, S3, EC2 y RDS. S3 puede quedar `blocked_by_cost_policy` por sus operaciones declaradas, pero no recibe una ruta diagnóstica diferente.

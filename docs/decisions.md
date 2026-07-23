@@ -185,3 +185,27 @@
 **Decisión:** registrar `GetMetricData`, `GetMetricStatistics` y `ListMetrics` como potencialmente facturables, describir su posible enriquecimiento y no ejecutarlas en la Fase 6, incluso con `include_paid_sources=true`.
 
 **Motivo:** pedir información avanzada no equivale a consentimiento concreto y limitado para generar posibles cargos.
+
+## D-032 — Salud local separada de cobertura AWS
+
+**Decisión:** mantener `health_check` rápido y limitado al estado local más una comprobación STS opcional, y delegar regiones, Resource Explorer, adaptadores, permisos y fuentes de actividad en `diagnosticar_cobertura_aws`.
+
+**Motivo:** la ausencia de credenciales o un permiso AWS denegado no significa que el servidor MCP esté caído, y un health check no debe convertirse en inventario.
+
+## D-033 — Registros dinámicos como fuente única
+
+**Decisión:** registrar las tools mediante una abstracción pública propia y diagnosticar los adaptadores desde su registro común y sus metadatos.
+
+**Motivo:** evita listas duplicadas, dependencias en internals de FastMCP y cualquier ruta especial para Lambda o S3.
+
+## D-034 — Diagnóstico acotado y no concluyente
+
+**Decisión:** limitar el diagnóstico a cinco regiones, no ejecutar inventario de adaptadores y distinguir operaciones permitidas por la política de permisos IAM realmente probados.
+
+**Motivo:** la cobertura debe explicarse sin convertir el diagnóstico en una exploración lenta ni afirmar que un servicio está vacío cuando no se ha consultado.
+
+## D-035 — Identidad mínima y anonimizada
+
+**Decisión:** exponer únicamente disponibilidad, cuenta enmascarada y tipo general de principal.
+
+**Motivo:** ARN, user ID, sesión, perfil y credenciales no son necesarios para explicar salud o cobertura.

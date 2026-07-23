@@ -1,6 +1,6 @@
 # Arquitectura
 
-## Estado en la Fase 6
+## Estado en la Fase 7
 
 El proyecto es un servidor MCP local escrito en Python. Un cliente MCP lo inicia como proceso local y se comunica con él mediante transporte `stdio`.
 
@@ -9,23 +9,35 @@ Cliente MCP
     ↓ stdio
 FastMCP server
     ├── health_check
+    │       └── local state + optional guarded STS probe
     ├── listar_recursos_aws
     │       └── AWS inventory
-    └── analizar_actividad_recursos
+    ├── analizar_actividad_recursos
             └── activity engine
                     ├── common adapter registry
                     ├── free service API signals
                     ├── CloudTrail Event History
                     └── blocked CloudWatch enrichment
+    └── diagnosticar_cobertura_aws
+            └── diagnostics engine
+                    ├── STS and enabled Regions
+                    ├── Resource Explorer metadata
+                    ├── common adapter registry
+                    ├── activity-source availability
+                    └── zero-cost operation registry
 ```
 
 FastMCP crea el servidor, registra las tools y gestiona el protocolo MCP. Cada tool mantiene su lógica de entrada y presentación separada de `server.py`.
+
+`tools/registry.py` es el registro público y dinámico de tools. El servidor y `health_check` reutilizan esa abstracción, sin inspeccionar atributos internos de FastMCP ni mantener listas duplicadas.
 
 La capa AWS es independiente del servidor MCP. `config.py` resuelve región y perfil sin leer secretos; `aws/session.py` crea sesiones Boto3 sin clientes globales; `aws/inventory.py` agrega y serializa el resultado común.
 
 Boto3 utiliza su cadena estándar de credenciales. El proyecto no lee manualmente claves, tokens ni archivos de credenciales y no realiza llamadas a AWS durante la importación.
 
 STS identifica la cuenta efectiva antes de consultar recursos. Los errores de sesión o identidad son globales. Los fallos posteriores son parciales y se devuelven en `errors` sin descartar los datos disponibles.
+
+El motor de diagnóstico no llama al motor de inventario. Inspecciona las declaraciones del mismo registro de adaptadores, prueba únicamente STS, regiones, metadatos de Resource Explorer y una muestra gratuita de CloudTrail, y conserva CloudWatch bloqueado. Esto separa “servidor operativo” de “cobertura AWS disponible”.
 
 `listar_recursos_aws` valida región, servicios, tipos y texto; transforma errores internos en respuestas seguras y genera un resumen con diagnóstico de cobertura. El diagnóstico Python directo continúa disponible.
 

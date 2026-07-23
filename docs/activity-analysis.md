@@ -97,6 +97,10 @@ En esta fase siempre se devuelve una explicación con `executed=false` y `requir
 
 Una futura autorización deberá limitar operación, recursos, periodo, máximo de consultas y una única ejecución.
 
+## Relación con el diagnóstico
+
+`diagnosticar_cobertura_aws` no analiza recursos. Informa de qué adaptadores declaran señales gratuitas, prueba `cloudtrail:LookupEvents` con una única muestra en una región comprobada y describe CloudWatch como `blocked_by_cost_policy`. Un permiso denegado en CloudTrail no borra la cobertura de STS, regiones, Resource Explorer o adaptadores.
+
 ## Límites de ejecución
 
 Los valores predeterminados son 100 recursos, 5 regiones, 20 evidencias por recurso, 500 eventos CloudTrail totales y 30 segundos. La concurrencia está limitada a una consulta secuencial, los datos solo se almacenan en memoria durante la ejecución y cualquier límite o fallo produce resultados parciales sin borrar los demás.

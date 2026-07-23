@@ -28,26 +28,30 @@ Implementar el registro común, adaptadores de solo lectura, detalles normalizad
 
 Completada. Analiza señales gratuitas mediante el contrato común de adaptadores y CloudTrail Event History, separa uso funcional, actividad administrativa, cambios de configuración y estado, y bloquea CloudWatch por la política zero-cost.
 
-## Fase 7 — Tool `revisar_free_tier`
+## Fase 7 — Diagnóstico, cobertura y health check avanzado
+
+Implementada. Separa salud local y cobertura AWS, amplía `health_check` con STS opcional y añade `diagnosticar_cobertura_aws` para regiones, Resource Explorer, adaptadores, permisos, actividad y política zero-cost.
+
+## Fase 8 — Tool `revisar_free_tier`
 
 Implementar `revisar_free_tier()` sin usar Cost Explorer.
 
-## Fase 8 — Seguridad e IAM de solo lectura
+## Fase 9 — Seguridad e IAM de solo lectura
 
 Documentar y validar el modelo de mínimo privilegio, el uso seguro de credenciales externas y los límites de acceso.
 
-## Fase 9 — Tests y calidad
+## Fase 10 — Tests y calidad
 
 Añadir pruebas automatizadas, lint y las comprobaciones de calidad necesarias.
 
-## Fase 10 — Integración con cliente MCP
+## Fase 11 — Integración con cliente MCP
 
 Documentar y verificar la ejecución local con un cliente MCP compatible.
 
-## Fase 11 — GitHub Actions CI
+## Fase 12 — GitHub Actions CI
 
 Configurar CI para ejecutar lint y tests en cada pull request.
 
-## Fase 12 — README, demo y cierre
+## Fase 13 — README, demo y cierre
 
 Completar la documentación, preparar una demo reproducible y cerrar la primera versión del proyecto.
