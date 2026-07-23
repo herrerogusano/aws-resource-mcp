@@ -221,6 +221,13 @@ def listar_recursos_aws(
             "all_resources": all_resources,
             "resources_by_service": resources_by_service,
             "coverage": inventory.get("coverage", {"status": "unavailable"}),
+            "coverage_summary": {
+                "status": inventory.get("coverage", {}).get(
+                    "status", "unavailable"
+                ),
+                "diagnostic_tool_available": True,
+                "full_diagnostic_executed": False,
+            },
             "errors": inventory_errors,
         }
     )

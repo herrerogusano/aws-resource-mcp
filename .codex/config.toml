@@ -9,5 +9,6 @@ enabled_tools = [
     "health_check",
     "listar_recursos_aws",
     "analizar_actividad_recursos",
+    "diagnosticar_cobertura_aws",
 ]
 default_tools_approval_mode = "prompt"

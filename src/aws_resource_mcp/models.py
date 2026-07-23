@@ -7,7 +7,12 @@ SENSITIVE_FIELD_NAMES = frozenset(
     {
         "aws_access_key_id",
         "aws_secret_access_key",
+        "accesskeyid",
         "session_token",
+        "user_agent",
+        "useragent",
+        "source_ip",
+        "sourceipaddress",
         "credentials",
         "environment",
         "environmentvariables",
