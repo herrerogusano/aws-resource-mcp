@@ -1,6 +1,6 @@
 # Arquitectura
 
-## Estado en la Fase 8
+## Estado en la Fase 9
 
 El proyecto es un servidor MCP local escrito en Python. Un cliente MCP lo inicia como proceso local y se comunica con él mediante transporte `stdio`.
 
@@ -73,6 +73,29 @@ El modelo raíz es idéntico para todos. Las diferencias válidas se limitan a `
 `OperationGuard` consulta el registro central antes de cada llamada SDK. `free` se permite; `unknown` y `write` se bloquean. `potentially_billable` solo se permite con un `ScopedOperationAuthorization` exacto. Este limita operación, región, peticiones y páginas, registra cada petición y no cambia `free-only`.
 
 `InventoryConsentStore` vive únicamente en el proceso MCP. Sus registros expiran, son de un solo uso y guardan hashes de identidad y scope. El inventario provisional se normaliza, anonimiza y limpia de campos sensibles.
+
+## Derivación de permisos IAM
+
+`OperationSpec` es también la fuente de verdad IAM. Cada operación registra las
+acciones autorizadoras, capacidad, componente consumidor, tools, alcance,
+etapa, coste, riesgo sensible, soporte de ARN, condiciones, dependencias,
+alternativas, política destino, consentimiento, justificación y referencia.
+
+```text
+registro de operaciones
+        ├──> OperationGuard en tiempo de ejecución
+        ├──> manifiesto auditable
+        └──> generador local determinista
+                ├── free-only
+                ├── consented-readonly
+                ├── combined-readonly
+                └── permissions boundary opcional
+```
+
+El generador solo concede acciones requeridas o dependientes verificadas. Las
+alternativas quedan como documentación. La política IAM establece el máximo
+técnico; el guard y los grants efímeros conservan una autorización de
+aplicación más estrecha para operaciones potencialmente facturables.
 
 ## Pipeline económico
 

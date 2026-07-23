@@ -82,3 +82,10 @@ Codex debe mostrar primero servicios, operaciones, regiones, límite y expiraci�
 ## Comprobación manual anonimizada
 
 El 2026-07-23, un cliente MCP nuevo por `stdio` validó el esquema y ejecutó únicamente la primera llamada en una región. Se conservaron 18 recursos de cuatro servicios y S3, SQS y SNS aparecieron como pendientes con `executed=false`. Operaciones potencialmente facturables únicas ejecutadas: 0. Peticiones potencialmente facturables ejecutadas: 0. No se usó el consentimiento generado.
+## Relación con la política IAM
+
+La política `consented-readonly` solo establece qué podría ejecutar una
+identidad dedicada. No crea, aprueba ni persiste consentimientos. Cada operación
+de descubrimiento, enriquecimiento o paginación conserva su grant exacto,
+regiones, límites y expiración; permitir `ListBuckets` no autoriza consultas de
+configuración del bucket.

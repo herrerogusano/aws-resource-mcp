@@ -95,3 +95,14 @@ Un cliente MCP por `stdio` descubrió las cuatro tools y ejecutó las dos tools 
 - ¿CloudTrail está disponible?
 - ¿Por qué la cobertura es parcial?
 - ¿Se ejecutó alguna operación potencialmente facturable?
+## Diagnóstico IAM local
+
+El diagnóstico muestra por operación las acciones IAM requeridas, capacidad,
+política destino, sensibilidad y necesidad de consentimiento. También informa
+si los artefactos locales están sincronizados. No lista políticas adjuntas ni
+deduce que la identidad sea dedicada; esa auditoría queda `not_checked`.
+
+Los estados diferencian una operación fuera de política, pendiente de
+consentimiento, excluida por sensibilidad o escritura y de clasificación
+desconocida. Un `AccessDenied` observado durante una llamada real sigue siendo
+un error de permiso, no evidencia de que no existan recursos.
