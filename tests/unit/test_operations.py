@@ -114,3 +114,21 @@ def test_cloudtrail_is_free_and_cloudwatch_is_blocked() -> None:
     client.get_metric_data.assert_not_called()
     client.get_metric_statistics.assert_not_called()
     client.list_metrics.assert_not_called()
+
+
+def test_free_tier_is_free_and_cost_explorer_requires_scoped_consent() -> None:
+    for operation in ("GetFreeTierUsage", "GetAccountPlanState"):
+        spec = OPERATION_REGISTRY[("freetier", operation)]
+        assert spec.access == "read"
+        assert spec.cost_classification == "free"
+        assert spec.enabled_in_free_only is True
+
+    for operation in (
+        "GetCostAndUsage",
+        "GetCostForecast",
+        "GetCostAndUsageWithResources",
+    ):
+        spec = OPERATION_REGISTRY[("ce", operation)]
+        assert spec.access == "read"
+        assert spec.cost_classification == "potentially_billable"
+        assert spec.enabled_in_free_only is False
