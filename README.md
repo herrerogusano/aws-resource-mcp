@@ -4,14 +4,14 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La Fase 6 está completada. El servidor combina inventario uniforme con análisis conservador de actividad mediante señales gratuitas de los servicios y CloudTrail Event History.
+La Fase 7 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad y diagnóstico explícito de salud y cobertura.
 
 ## Alcance previsto
 
 - Transporte MCP local mediante `stdio`.
 - Región principal: `eu-west-1`.
 - Consultas de AWS exclusivamente de lectura y bajo mínimo privilegio.
-- Tools disponibles: `health_check()`, `listar_recursos_aws()` y `analizar_actividad_recursos()`.
+- Tools disponibles: `health_check()`, `listar_recursos_aws()`, `analizar_actividad_recursos()` y `diagnosticar_cobertura_aws()`.
 - Tool prevista: `revisar_free_tier()`.
 - Sin Cost Explorer, despliegue en AWS ni CD.
 
@@ -75,7 +75,13 @@ No se guardan claves en el proyecto. Boto3 usa su cadena estándar de resolució
 
 ### `health_check`
 
-`health_check()` no recibe parámetros ni usa red, credenciales o AWS. Devuelve una respuesta estable con el estado del servidor, su nombre y un mensaje de diagnóstico.
+`health_check(check_aws=True)` separa la salud local de la accesibilidad de AWS. Sin argumentos realiza como máximo una llamada protegida a STS; con `check_aws=false` no usa red. Devuelve versión, transporte, tools y adaptadores registrados, región, política económica y cero operaciones facturables. Sus estados son:
+
+- `ok`: servidor y configuración válidos; STS respondió cuando se solicitó.
+- `degraded`: el servidor funciona, pero faltan credenciales o STS no es accesible.
+- `error`: la configuración segura o los registros internos no pueden inicializarse.
+
+La identidad se anonimiza: solo se conserva el tipo general de principal y, cuando existe, una cuenta enmascarada. No ejecuta inventario, Resource Explorer, adaptadores, CloudTrail ni CloudWatch.
 
 ### `listar_recursos_aws`
 
@@ -117,6 +123,26 @@ Los estados por recurso son `active`, `inactive_candidate`, `unknown`, `not_supp
 
 CloudWatch podría aportar métricas funcionales, pero `GetMetricData`, `GetMetricStatistics` y `ListMetrics` están registrados como potencialmente facturables y bloqueados. `include_paid_sources=true` solo solicita la explicación estructurada; no constituye consentimiento y nunca ejecuta esas operaciones en esta fase.
 
+### `diagnosticar_cobertura_aws`
+
+Explica qué puede consultar realmente el MCP sin enumerar recursos. Acepta filtros `services` y `regions`, y permite omitir las secciones de permisos, actividad o política económica.
+
+Comprueba STS, regiones habilitadas, índices existentes de Resource Explorer, registro y capacidades de adaptadores, fuentes gratuitas de actividad y operaciones bloqueadas. Las comprobaciones se limitan a cinco regiones por ejecución, una muestra de CloudTrail y ninguna llamada de CloudWatch.
+
+Los estados de cobertura distinguen `available`, `partial`, `unavailable`, `not_configured`, `permission_denied`, `blocked_by_cost_policy`, `not_supported`, `not_checked` y `error`. Una operación declarada como permitida por la política no se presenta como permiso IAM demostrado: el diagnóstico no ejecuta inventarios de servicio para probarlo.
+
+Ejemplo:
+
+```json
+{
+  "services": ["ec2", "rds"],
+  "regions": ["eu-west-1"],
+  "include_activity_sources": true
+}
+```
+
+Las limitaciones indican impacto, si el MCP puede continuar, si faltan permisos, si resolverlas exigiría escritura y si podría existir coste. El diagnóstico nunca realiza la acción sugerida.
+
 ## Inventario AWS
 
 Boto3 es el SDK oficial de AWS para Python. La capa de inventario utiliza:
@@ -131,7 +157,7 @@ Lambda y S3 fueron los primeros servicios implementados, pero ya no conservan ru
 
 Los resultados se deduplican por ARN o, si falta, por tipo, región e identificador/nombre. Se prefiere un índice agregador; con índices locales se combinan resultados y la cobertura es parcial. Si Resource Explorer no está disponible, se ejecutan todos los adaptadores seleccionados que soportan descubrimiento.
 
-La ausencia de credenciales o la imposibilidad de identificar la cuenta es un error global. Los fallos posteriores son parciales: se conservan los datos disponibles y el problema aparece en `errors`.
+La ausencia de credenciales o la imposibilidad de identificar la cuenta es un error global para inventario, pero solo un estado `degraded` para la salud local. El diagnóstico conserva sus comprobaciones locales y omite de forma segura las dependientes de AWS.
 
 Todas las llamadas Boto3 pasan primero por un registro central. Las operaciones no registradas, de escritura o de coste desconocido se bloquean. El modo predeterminado `AWS_MCP_COST_MODE=free-only` bloquea también operaciones potencialmente facturables. S3, SQS y SNS pertenecen a esta categoría porque AWS puede contabilizar sus peticiones; sus recursos todavía pueden aparecer mediante Resource Explorer.
 
@@ -146,3 +172,4 @@ Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista 
 - [Política zero-cost](docs/zero-cost-policy.md)
 - [Adaptadores de servicios](docs/service-adapters.md)
 - [Análisis de actividad](docs/activity-analysis.md)
+- [Diagnóstico y cobertura](docs/diagnostics-and-coverage.md)

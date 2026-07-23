@@ -34,6 +34,14 @@ Las operaciones `cloudwatch:GetMetricData`, `cloudwatch:GetMetricStatistics` y `
 
 No se usan Metrics Insights, Logs Insights, métricas personalizadas, CloudTrail Lake, data stores, SQL ni archivos de trails en S3.
 
+## Diagnóstico en la Fase 7
+
+`health_check` solo puede ejecutar `sts:GetCallerIdentity`. `diagnosticar_cobertura_aws` reutiliza operaciones gratuitas registradas para STS, `ec2:DescribeRegions`, metadatos de Resource Explorer y una única muestra `cloudtrail:LookupEvents`.
+
+El diagnóstico no ejecuta adaptadores de inventario para probar permisos. Informa por separado de que una operación está registrada y permitida por la política, pero su permiso IAM queda `not_checked`. Las operaciones S3, SQS, SNS y CloudWatch continúan bloqueadas cuando corresponda. El contador `billable_operations_executed` es cero por defecto y en la comprobación manual.
+
+Antes del cierre se revisará la política excesivamente conservadora de inventario de bajo volumen para S3, SQS y SNS, sin incluir listado de objetos, métricas ni consultas intensivas.
+
 Referencias oficiales:
 
 - [AWS Resource Explorer pricing](https://aws.amazon.com/resourceexplorer/pricing/)
