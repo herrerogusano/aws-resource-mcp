@@ -42,6 +42,7 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
             "safety": {
                 "billable_operations_executed": 0,
                 "potentially_billable_operations_executed": 0,
+                "potentially_billable_requests_executed": 0,
                 "pending_consent_count": CONSENT_STORE.pending_count(),
             },
         }
@@ -76,6 +77,7 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
                 "cost_mode": "invalid",
                 "billable_operations_executed": 0,
                 "potentially_billable_operations_executed": 0,
+                "potentially_billable_requests_executed": 0,
                 "pending_consent_count": CONSENT_STORE.pending_count(),
                 "write_operations_enabled": False,
             },
@@ -117,11 +119,22 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
             "registered_tool_count": len(tool_names),
             "registered_tools": tool_names,
             "inventory_consent_flow": True,
+            "economic_risk_analysis": True,
+            "free_tier_api": {
+                "available": True,
+                "cost_classification": "free",
+            },
+            "cost_explorer": {
+                "available_with_explicit_consent": True,
+                "cost_classification": "potentially_billable",
+                "automatic_execution": False,
+            },
         },
         "safety": {
             "cost_mode": config.cost_mode,
             "billable_operations_executed": 0,
             "potentially_billable_operations_executed": 0,
+            "potentially_billable_requests_executed": 0,
             "pending_consent_count": CONSENT_STORE.pending_count(),
             "write_operations_enabled": False,
         },

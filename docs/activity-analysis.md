@@ -1,5 +1,7 @@
 # Análisis de actividad
 
+La fase 8 puede reutilizar este resultado para priorizar señales potenciales de coste. `inactive_candidate` aumenta la prioridad únicamente cuando ya existe un indicador económico; `unknown` nunca se interpreta como inactividad ni como gasto.
+
 ## Qué significa actividad
 
 La tool `analizar_actividad_recursos` no reduce toda la evidencia a un ambiguo `last_used_at`. Usa cinco tipos comunes:

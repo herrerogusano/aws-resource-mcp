@@ -36,9 +36,9 @@ Implementada. Separa salud local y cobertura AWS, amplía `health_check` con STS
 
 Implementada. Devuelve primero el inventario gratuito y representa S3, SQS y SNS como pendientes cuando su enumeración puede contabilizar peticiones. Una segunda llamada puede conceder una autorización efímera, exacta, limitada y de un solo uso. Descubrimiento, enriquecimiento y paginación se autorizan por separado.
 
-## Fase 8 — Tool `revisar_free_tier`
+## Fase 8 — Riesgo económico, Free Tier y costes reales
 
-Implementar `revisar_free_tier()` sin usar Cost Explorer.
+Implementada. Añade un modelo económico uniforme, `analizar_riesgo_costes`, las consultas gratuitas `revisar_free_tier` y una integración mínima con Cost Explorer que exige consentimiento efímero, exacto y de una sola petición. La primera llamada de coste no contacta con AWS; forecast y detalle por recurso quedan separados y no implementados.
 
 ## Fase 9 — Seguridad e IAM de solo lectura
 

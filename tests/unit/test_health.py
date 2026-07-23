@@ -96,17 +96,26 @@ def test_health_check_reports_dynamic_capabilities_and_zero_cost() -> None:
     result = health_check(check_aws=False)
 
     assert result["capabilities"]["registered_adapter_count"] == 13
-    assert result["capabilities"]["registered_tool_count"] == 4
+    assert result["capabilities"]["registered_tool_count"] == 7
     assert result["capabilities"]["registered_tools"] == [
         "health_check",
         "listar_recursos_aws",
         "analizar_actividad_recursos",
         "diagnosticar_cobertura_aws",
+        "analizar_riesgo_costes",
+        "revisar_free_tier",
+        "consultar_costes_aws",
     ]
+    assert result["capabilities"]["free_tier_api"]["cost_classification"] == "free"
+    assert (
+        result["capabilities"]["cost_explorer"]["cost_classification"]
+        == "potentially_billable"
+    )
     assert result["safety"] == {
         "cost_mode": "free-only",
         "billable_operations_executed": 0,
         "potentially_billable_operations_executed": 0,
+        "potentially_billable_requests_executed": 0,
         "pending_consent_count": 0,
         "write_operations_enabled": False,
     }

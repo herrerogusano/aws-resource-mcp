@@ -67,6 +67,7 @@ class ConsentRecord:
     created_at: datetime
     expires_at: datetime
     identity_hash: str
+    consent_type: str
     scope: dict[str, Any]
     scope_hash: str
     pending_operations: list[dict[str, Any]]
@@ -93,6 +94,7 @@ class InventoryConsentStore:
         pending_operations: list[dict[str, Any]],
         provisional_inventory: dict[str, Any],
         continuation_tokens: dict[str, str] | None = None,
+        consent_type: str = "inventory",
         now: datetime | None = None,
     ) -> ConsentRecord:
         timestamp = now or datetime.now(timezone.utc)
@@ -101,6 +103,7 @@ class InventoryConsentStore:
             created_at=timestamp,
             expires_at=timestamp + timedelta(seconds=self.ttl_seconds),
             identity_hash=identity_hash,
+            consent_type=consent_type,
             scope=deepcopy(scope),
             scope_hash=scope_fingerprint(scope),
             pending_operations=deepcopy(pending_operations),
@@ -122,6 +125,18 @@ class InventoryConsentStore:
                     "consumed": False,
                 }
             )
+        return record
+
+    def bind_identity(self, request_id: str, identity_hash: str) -> ConsentRecord:
+        """Bind a no-network consent draft to the identity used at execution."""
+        record = self.get(request_id)
+        with self._lock:
+            if record.identity_hash not in {"", "unbound", identity_hash}:
+                raise ConsentValidationError(
+                    "consent_identity_mismatch",
+                    "The consent request is bound to a different AWS identity.",
+                )
+            record.identity_hash = identity_hash
         return record
 
     def get(
@@ -149,19 +164,51 @@ class InventoryConsentStore:
                     "The consent request has been cancelled.",
                 )
             if timestamp >= record.expires_at:
+                record.identity_hash = ""
+                record.scope.clear()
+                record.pending_operations.clear()
+                record.provisional_inventory.clear()
+                record.continuation_tokens.clear()
                 raise ConsentValidationError(
                     "consent_expired",
                     "The consent request has expired.",
                 )
             return record
 
-    def consume(self, request_id: str) -> None:
+    def consume(self, request_id: str, *, now: datetime | None = None) -> None:
+        timestamp = now or datetime.now(timezone.utc)
         with self._lock:
-            self._records[request_id].used = True
+            record = self._records.get(request_id)
+            if record is None:
+                raise ConsentValidationError(
+                    "consent_not_found",
+                    "The consent request does not exist in this MCP process.",
+                )
+            if record.used:
+                raise ConsentValidationError(
+                    "consent_already_used",
+                    "The consent request has already been consumed.",
+                )
+            if record.cancelled:
+                raise ConsentValidationError(
+                    "consent_cancelled",
+                    "The consent request has been cancelled.",
+                )
+            if timestamp >= record.expires_at:
+                record.identity_hash = ""
+                record.scope.clear()
+                record.pending_operations.clear()
+                record.provisional_inventory.clear()
+                record.continuation_tokens.clear()
+                raise ConsentValidationError(
+                    "consent_expired",
+                    "The consent request has expired.",
+                )
+            record.used = True
             self._audit_events.append(
                 {
                     "consent_id": anonymized_consent_id(request_id),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": timestamp.isoformat(),
                     "result": "consumed",
                     "requests_executed": 0,
                     "consumed": True,
@@ -200,14 +247,21 @@ class InventoryConsentStore:
                         authorization.pagination_requests_executed
                     ),
                     "regions": sorted(
-                        {
-                            event["region"]
-                            for event in authorization.audit_events
-                        }
+                        {event["region"] for event in authorization.audit_events}
                     ),
                     "consumed": True,
                 }
             )
+
+    def destroy_payload(self, request_id: str) -> None:
+        """Erase scope, provisional data, and tokens while retaining a tombstone."""
+        with self._lock:
+            record = self._records[request_id]
+            record.identity_hash = ""
+            record.scope.clear()
+            record.pending_operations.clear()
+            record.provisional_inventory.clear()
+            record.continuation_tokens.clear()
 
     def audit_events(self) -> list[dict[str, Any]]:
         """Return a copy of safe process-local audit metadata."""
@@ -217,6 +271,17 @@ class InventoryConsentStore:
     def pending_count(self, *, now: datetime | None = None) -> int:
         timestamp = now or datetime.now(timezone.utc)
         with self._lock:
+            for record in self._records.values():
+                if (
+                    not record.used
+                    and not record.cancelled
+                    and timestamp >= record.expires_at
+                ):
+                    record.identity_hash = ""
+                    record.scope.clear()
+                    record.pending_operations.clear()
+                    record.provisional_inventory.clear()
+                    record.continuation_tokens.clear()
             return sum(
                 not record.used
                 and not record.cancelled

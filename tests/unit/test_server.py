@@ -12,4 +12,7 @@ def test_server_registers_expected_tools() -> None:
         "listar_recursos_aws",
         "analizar_actividad_recursos",
         "diagnosticar_cobertura_aws",
+        "analizar_riesgo_costes",
+        "revisar_free_tier",
+        "consultar_costes_aws",
     }
