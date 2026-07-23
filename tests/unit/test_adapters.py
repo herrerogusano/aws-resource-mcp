@@ -102,7 +102,9 @@ def test_every_adapter_normalizes_resources_and_serializes(
     resource = next(item for item in resources if item["resource_type"] == expected_type)
     assert set(resource) == ROOT_FIELDS
     assert resource["service"] == name
-    assert resource["activity"] == {"status": "not_analyzed"}
+    assert resource["activity"]["status"] == "unknown"
+    assert resource["activity"]["activity_type"] == "unknown"
+    assert resource["activity"]["paid_data_executed"] is False
     assert isinstance(resource["details"], dict)
     assert all(indicator["actual_cost_confirmed"] is False for indicator in resource["cost_indicators"])
     json.dumps(resources)

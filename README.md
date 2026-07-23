@@ -4,14 +4,15 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La Fase 5 está completada. El servidor combina Resource Explorer con un registro uniforme de adaptadores de solo lectura para los principales servicios AWS.
+La Fase 6 está completada. El servidor combina inventario uniforme con análisis conservador de actividad mediante señales gratuitas de los servicios y CloudTrail Event History.
 
 ## Alcance previsto
 
 - Transporte MCP local mediante `stdio`.
 - Región principal: `eu-west-1`.
 - Consultas de AWS exclusivamente de lectura y bajo mínimo privilegio.
-- Tools previstas: `listar_recursos_aws()` y `revisar_free_tier()`.
+- Tools disponibles: `health_check()`, `listar_recursos_aws()` y `analizar_actividad_recursos()`.
+- Tool prevista: `revisar_free_tier()`.
 - Sin Cost Explorer, despliegue en AWS ni CD.
 
 ## Desarrollo
@@ -89,6 +90,7 @@ Consulta el inventario AWS disponible para las credenciales locales sin modifica
 - `include_details`: incluye metadatos específicos dentro de `details`.
 - `include_cost_indicators`: incluye señales potenciales de coste sin afirmar gasto real.
 - `confirm_potentially_billable_operations`: confirma operaciones potencialmente facturables; solo tiene efecto junto a `AWS_MCP_COST_MODE=allow-paid-with-confirmation`.
+- `include_activity_summary`: añade un resumen breve usando solo campos ya obtenidos; no consulta CloudTrail ni CloudWatch.
 
 Ejemplo de argumentos enviados por un cliente MCP:
 
@@ -105,6 +107,16 @@ Una respuesta `ok` cubre los tipos soportados por un índice agregador accesible
 
 `resources`, `all_resources` y `resources_by_service` representan el mismo inventario deduplicado. Cada recurso contiene `id`, `arn`, `name`, `service`, `resource_type`, `region`, `account_id`, `state`, `created_at`, `sources`, `details`, `cost_indicators` y `activity`. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura.
 
+### `analizar_actividad_recursos`
+
+Analiza el último indicio conocido mediante el mismo registro y modelo para todos los recursos. Acepta filtros por `services`, `regions` y `resource_ids`, además de `inactive_days`, `lookback_days`, `include_administrative_events` y límites configurables. El historial de CloudTrail se limita a 90 días y se consulta por región, no una vez por recurso.
+
+La respuesta separa `last_functional_usage_at`, `last_administrative_activity_at`, `last_configuration_change_at` y `last_state_change_at`. `best_known_activity_at` siempre indica también el tipo de señal. Un estado activo, una consulta `Describe*` o una fecha de modificación no se presentan como uso funcional.
+
+Los estados por recurso son `active`, `inactive_candidate`, `unknown`, `not_supported` o `error`. Un candidato inactivo es únicamente un elemento para revisar: requiere antigüedad suficiente, una fuente relevante consultada y ausencia de evidencia reciente contradictoria. Falta de permisos, fuentes insuficientes o relaciones ambiguas producen `unknown`, no una falsa certeza de inactividad.
+
+CloudWatch podría aportar métricas funcionales, pero `GetMetricData`, `GetMetricStatistics` y `ListMetrics` están registrados como potencialmente facturables y bloqueados. `include_paid_sources=true` solo solicita la explicación estructurada; no constituye consentimiento y nunca ejecuta esas operaciones en esta fase.
+
 ## Inventario AWS
 
 Boto3 es el SDK oficial de AWS para Python. La capa de inventario utiliza:
@@ -113,6 +125,7 @@ Boto3 es el SDK oficial de AWS para Python. La capa de inventario utiliza:
 - EC2 `DescribeRegions` para descubrir únicamente regiones habilitadas.
 - Resource Explorer para descubrir dinámicamente recursos y tipos soportados mediante índices y vistas existentes.
 - Un registro común de adaptadores para Lambda, S3, EC2/EBS/VPC, RDS/Aurora, DynamoDB, ECS/Fargate, API Gateway, CloudFormation, SQS, SNS, IAM, CloudFront y Route 53.
+- CloudTrail `LookupEvents` para el historial regional gratuito de eventos de administración de los últimos 90 días.
 
 Lambda y S3 fueron los primeros servicios implementados, pero ya no conservan rutas arquitectónicas especiales. Todos los adaptadores declaran metadatos, operaciones Boto3, alcance, tipos, detalles e indicadores mediante el mismo contrato. Los detalles particulares viven únicamente dentro de `details`.
 
@@ -132,3 +145,4 @@ Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista 
 - [Progreso](docs/progress.md)
 - [Política zero-cost](docs/zero-cost-policy.md)
 - [Adaptadores de servicios](docs/service-adapters.md)
+- [Análisis de actividad](docs/activity-analysis.md)

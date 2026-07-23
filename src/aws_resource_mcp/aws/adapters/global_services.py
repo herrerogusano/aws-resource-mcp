@@ -1,6 +1,6 @@
 """IAM, CloudFront, and Route 53 global adapters."""
 
-from aws_resource_mcp.aws.adapters.base import AdapterContext, AdapterMetadata, BaseAdapter, pages
+from aws_resource_mcp.aws.adapters.base import ActivityField, AdapterContext, AdapterMetadata, BaseAdapter, pages
 from aws_resource_mcp.models import Resource, cost_indicator, make_resource
 
 
@@ -10,6 +10,11 @@ class IAMAdapter(BaseAdapter):
         operations=(("iam", "ListUsers"), ("iam", "ListRoles"), ("iam", "ListPolicies")),
         resource_types=("AWS::IAM::User", "AWS::IAM::Role", "AWS::IAM::ManagedPolicy"),
         detail_fields=("last_used_at", "attached_policies_count", "permissions_boundary"),
+        activity_fields=(
+            ActivityField("last_used_at", "functional_usage", "RoleLastUsed", "high"),
+            ActivityField("password_last_used", "functional_usage", "PasswordLastUsed", "high"),
+            ActivityField("updated_at", "configuration_change", "PolicyUpdated", "medium"),
+        ),
     )
 
     def discover(self, context: AdapterContext) -> list[Resource]:
@@ -47,6 +52,9 @@ class CloudFrontAdapter(BaseAdapter):
         resource_types=("AWS::CloudFront::Distribution",),
         detail_fields=("enabled", "price_class", "origins_count", "aliases_count"),
         cost_indicator_types=("enabled_distribution",),
+        activity_fields=(ActivityField(
+            "last_modified", "configuration_change", "LastModifiedTime", "medium"
+        ),),
     )
 
     def discover(self, context: AdapterContext) -> list[Resource]:
@@ -62,8 +70,8 @@ class CloudFrontAdapter(BaseAdapter):
             resources.append(make_resource(
                 service="cloudfront", resource_type="AWS::CloudFront::Distribution", region="global",
                 source="cloudfront_api", identifier=identifier, arn=item.get("ARN"), name=identifier,
-                account_id=context.account_id, state=item.get("Status"), created_at=item.get("LastModifiedTime"),
-                details={"enabled": enabled, "price_class": item.get("PriceClass"), "origins_count": item.get("Origins", {}).get("Quantity"), "aliases_count": item.get("Aliases", {}).get("Quantity"), "http_version": item.get("HttpVersion"), "ipv6_enabled": item.get("IsIPV6Enabled")} if context.include_details else {},
+                account_id=context.account_id, state=item.get("Status"),
+                details={"enabled": enabled, "price_class": item.get("PriceClass"), "origins_count": item.get("Origins", {}).get("Quantity"), "aliases_count": item.get("Aliases", {}).get("Quantity"), "http_version": item.get("HttpVersion"), "ipv6_enabled": item.get("IsIPV6Enabled"), "last_modified": item.get("LastModifiedTime").isoformat() if hasattr(item.get("LastModifiedTime"), "isoformat") else item.get("LastModifiedTime")} if context.include_details else {},
                 cost_indicators=indicators,
             ))
         return resources

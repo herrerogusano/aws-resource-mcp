@@ -5,9 +5,19 @@ from dataclasses import dataclass, field
 from typing import Any, ClassVar, Literal, Protocol, runtime_checkable
 
 from aws_resource_mcp.aws.operations import OperationGuard
-from aws_resource_mcp.models import InventoryError, Resource
+from aws_resource_mcp.models import ActivityConfidence, ActivityType, InventoryError, Resource
 
 Scope = Literal["regional", "global"]
+
+
+@dataclass(frozen=True)
+class ActivityField:
+    """A timestamp exposed by a service API and its precise meaning."""
+
+    field: str
+    activity_type: ActivityType
+    activity_name: str
+    confidence: ActivityConfidence
 
 
 @dataclass(frozen=True)
@@ -20,6 +30,7 @@ class AdapterMetadata:
     supports_enrichment: bool = True
     detail_fields: tuple[str, ...] = ()
     cost_indicator_types: tuple[str, ...] = ()
+    activity_fields: tuple[ActivityField, ...] = ()
 
 
 @dataclass
@@ -55,6 +66,16 @@ class AdapterContext:
         return response
 
 
+@dataclass(frozen=True)
+class ActivityContext:
+    """Bounded settings shared by every adapter activity lookup."""
+
+    inactive_days: int
+    lookback_days: int
+    include_administrative_events: bool
+    max_events_per_resource: int
+
+
 @runtime_checkable
 class ResourceAdapter(Protocol):
     metadata: AdapterMetadata
@@ -66,6 +87,12 @@ class ResourceAdapter(Protocol):
         resources: list[Resource],
         context: AdapterContext,
     ) -> list[Resource]: ...
+
+    def get_free_activity_signals(
+        self,
+        resources: list[Resource],
+        context: ActivityContext,
+    ) -> list[dict[str, Any]]: ...
 
 
 class BaseAdapter:
@@ -82,6 +109,68 @@ class BaseAdapter:
         context: AdapterContext,
     ) -> list[Resource]:
         return resources
+
+    def get_free_activity_signals(
+        self,
+        resources: list[Resource],
+        context: ActivityContext,
+    ) -> list[dict[str, Any]]:
+        """Extract free, already-returned service API signals uniformly."""
+        del context
+        signals: list[dict[str, Any]] = []
+        for resource in resources:
+            resource_ids = _resource_aliases(resource)
+            created_at = resource.get("created_at")
+            if created_at:
+                signals.append({
+                    "timestamp": created_at,
+                    "activity_type": "configuration_change",
+                    "activity_name": "ResourceCreated",
+                    "source": f"{self.metadata.service_name}_api",
+                    "confidence": "low",
+                    "region": resource.get("region") or "global",
+                    "resource_ids": resource_ids,
+                    "category": "create",
+                })
+            state = resource.get("state")
+            if state:
+                signals.append({
+                    "timestamp": None,
+                    "activity_type": "resource_state",
+                    "activity_name": f"CurrentState:{state}",
+                    "source": f"{self.metadata.service_name}_api",
+                    "confidence": "low",
+                    "region": resource.get("region") or "global",
+                    "resource_ids": resource_ids,
+                    "category": "state",
+                })
+            details = resource.get("details", {})
+            for activity_field in self.metadata.activity_fields:
+                timestamp = details.get(activity_field.field)
+                if timestamp:
+                    signals.append({
+                        "timestamp": timestamp,
+                        "activity_type": activity_field.activity_type,
+                        "activity_name": activity_field.activity_name,
+                        "source": f"{self.metadata.service_name}_api",
+                        "confidence": activity_field.confidence,
+                        "region": resource.get("region") or "global",
+                        "resource_ids": resource_ids,
+                        "category": (
+                            "access"
+                            if activity_field.activity_type == "functional_usage"
+                            else "update"
+                        ),
+                    })
+        return signals
+
+
+def _resource_aliases(resource: Resource) -> list[str]:
+    return list(dict.fromkeys(
+        str(value)
+        for value in (resource.get("arn"), resource.get("id"), resource.get("name"))
+        if value
+    ))
 
 
 def pages(

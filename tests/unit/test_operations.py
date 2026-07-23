@@ -89,3 +89,20 @@ def test_request_metered_services_are_not_free_by_default(service: str) -> None:
         if registered_service == service
     }
     assert classifications == {"potentially_billable"}
+
+
+def test_cloudtrail_is_free_and_cloudwatch_is_blocked() -> None:
+    cloudtrail = OPERATION_REGISTRY[("cloudtrail", "LookupEvents")]
+    assert cloudtrail.access == "read"
+    assert cloudtrail.cost_classification == "free"
+    assert cloudtrail.enabled_in_free_only is True
+
+    client = Mock()
+    for operation in ("GetMetricData", "GetMetricStatistics", "ListMetrics"):
+        spec = OPERATION_REGISTRY[("cloudwatch", operation)]
+        assert spec.cost_classification == "potentially_billable"
+        with pytest.raises(OperationBlockedError):
+            OperationGuard().call(client, service="cloudwatch", operation=operation)
+    client.get_metric_data.assert_not_called()
+    client.get_metric_statistics.assert_not_called()
+    client.list_metrics.assert_not_called()

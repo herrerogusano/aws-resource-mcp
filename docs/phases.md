@@ -26,7 +26,7 @@ Implementar el registro común, adaptadores de solo lectura, detalles normalizad
 
 ## Fase 6 — Actividad y último uso conocido
 
-Analizar señales de actividad mediante un contrato común, distinguiendo evidencia, ausencia de datos y fecha de último uso.
+Completada. Analiza señales gratuitas mediante el contrato común de adaptadores y CloudTrail Event History, separa uso funcional, actividad administrativa, cambios de configuración y estado, y bloquea CloudWatch por la política zero-cost.
 
 ## Fase 7 — Tool `revisar_free_tier`
 

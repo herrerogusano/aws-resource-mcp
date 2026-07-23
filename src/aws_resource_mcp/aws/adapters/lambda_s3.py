@@ -5,6 +5,7 @@ from typing import Any
 from botocore.exceptions import ClientError
 
 from aws_resource_mcp.aws.adapters.base import (
+    ActivityField,
     AdapterContext,
     AdapterMetadata,
     BaseAdapter,
@@ -32,6 +33,9 @@ class LambdaAdapter(BaseAdapter):
             "vpc_id",
         ),
         cost_indicator_types=("high_memory", "additional_ephemeral_storage"),
+        activity_fields=(ActivityField(
+            "last_modified", "configuration_change", "LastModified", "medium"
+        ),),
     )
 
     def discover(self, context: AdapterContext) -> list[Resource]:

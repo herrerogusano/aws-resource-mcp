@@ -2,7 +2,7 @@
 
 import json
 
-from aws_resource_mcp.aws.adapters.base import AdapterContext, AdapterMetadata, BaseAdapter, pages
+from aws_resource_mcp.aws.adapters.base import ActivityField, AdapterContext, AdapterMetadata, BaseAdapter, pages
 from aws_resource_mcp.models import Resource, cost_indicator, make_resource
 
 
@@ -54,6 +54,9 @@ class CloudFormationAdapter(BaseAdapter):
         operations=(("cloudformation", "ListStacks"), ("cloudformation", "ListStackResources")),
         resource_types=("AWS::CloudFormation::Stack",),
         detail_fields=("resources_count", "drift_status", "termination_protection"),
+        activity_fields=(ActivityField(
+            "last_updated_at", "configuration_change", "LastUpdatedTime", "medium"
+        ),),
     )
     _ACTIVE_STATUSES = (
         "CREATE_IN_PROGRESS", "CREATE_FAILED", "CREATE_COMPLETE", "ROLLBACK_IN_PROGRESS",
