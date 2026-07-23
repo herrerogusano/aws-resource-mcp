@@ -1,0 +1,13 @@
+[mcp_servers.aws_resource_mcp]
+command = "uv"
+args = ["run", "aws-resource-mcp"]
+enabled = true
+required = false
+startup_timeout_sec = 20
+tool_timeout_sec = 120
+enabled_tools = [
+    "health_check",
+    "listar_recursos_aws",
+    "analizar_actividad_recursos",
+]
+default_tools_approval_mode = "prompt"
