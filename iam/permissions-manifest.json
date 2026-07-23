@@ -1,0 +1,3067 @@
+{
+  "capabilities": [
+    {
+      "capability": "activity.free",
+      "components": [
+        "activity.cloudtrail"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "cloudtrail:LookupEvents"
+      ],
+      "operations": [
+        "cloudtrail:LookupEvents"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "diagnosticar_cobertura_aws"
+      ]
+    },
+    {
+      "capability": "activity.paid",
+      "components": [
+        "activity.cloudwatch"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "potentially_billable"
+      ],
+      "iam_actions": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics"
+      ],
+      "operations": [
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics"
+      ],
+      "policy_targets": [
+        "excluded"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos"
+      ]
+    },
+    {
+      "capability": "cost_explorer.consented",
+      "components": [
+        "economics.cost_explorer"
+      ],
+      "consent_required": true,
+      "cost_classifications": [
+        "potentially_billable"
+      ],
+      "iam_actions": [
+        "ce:GetCostAndUsage"
+      ],
+      "operations": [
+        "ce:GetCostAndUsage"
+      ],
+      "policy_targets": [
+        "consented-readonly"
+      ],
+      "sensitive_data_risks": [
+        "medium"
+      ],
+      "tools": [
+        "analizar_riesgo_costes",
+        "consultar_costes_aws"
+      ]
+    },
+    {
+      "capability": "cost_explorer.future",
+      "components": [
+        "economics.cost_explorer"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "potentially_billable"
+      ],
+      "iam_actions": [
+        "ce:GetCostAndUsageWithResources",
+        "ce:GetCostForecast"
+      ],
+      "operations": [
+        "ce:GetCostAndUsageWithResources",
+        "ce:GetCostForecast"
+      ],
+      "policy_targets": [
+        "excluded"
+      ],
+      "sensitive_data_risks": [
+        "medium"
+      ],
+      "tools": [
+        "consultar_costes_aws"
+      ]
+    },
+    {
+      "capability": "development.policy_simulation",
+      "components": [
+        "security.validation"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "unknown"
+      ],
+      "iam_actions": [
+        "iam:SimulateCustomPolicy"
+      ],
+      "operations": [
+        "iam:SimulateCustomPolicy"
+      ],
+      "policy_targets": [
+        "excluded"
+      ],
+      "sensitive_data_risks": [
+        "medium"
+      ],
+      "tools": []
+    },
+    {
+      "capability": "development.policy_validation",
+      "components": [
+        "security.validation"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "unknown"
+      ],
+      "iam_actions": [
+        "access-analyzer:ValidatePolicy"
+      ],
+      "operations": [
+        "accessanalyzer:ValidatePolicy"
+      ],
+      "policy_targets": [
+        "excluded"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": []
+    },
+    {
+      "capability": "free_tier",
+      "components": [
+        "economics.free_tier"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "freetier:GetAccountPlanState",
+        "freetier:GetFreeTierUsage"
+      ],
+      "operations": [
+        "freetier:GetAccountPlanState",
+        "freetier:GetFreeTierUsage"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "medium"
+      ],
+      "tools": [
+        "analizar_riesgo_costes",
+        "revisar_free_tier"
+      ]
+    },
+    {
+      "capability": "identity",
+      "components": [
+        "aws.identity"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "sts:GetCallerIdentity"
+      ],
+      "operations": [
+        "sts:GetCallerIdentity"
+      ],
+      "policy_targets": [
+        "excluded"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "health_check",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.apigateway",
+      "components": [
+        "adapter:apigateway"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "apigateway:GET"
+      ],
+      "operations": [
+        "apigateway:GetRestApis",
+        "apigateway:GetStages",
+        "apigatewayv2:GetApis",
+        "apigatewayv2:GetStages"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.cloudformation",
+      "components": [
+        "adapter:cloudformation"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "cloudformation:ListStackResources",
+        "cloudformation:ListStacks"
+      ],
+      "operations": [
+        "cloudformation:ListStackResources",
+        "cloudformation:ListStacks"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.cloudfront",
+      "components": [
+        "adapter:cloudfront"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "cloudfront:ListDistributions"
+      ],
+      "operations": [
+        "cloudfront:ListDistributions"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.dynamodb",
+      "components": [
+        "adapter:dynamodb"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "dynamodb:DescribeContinuousBackups",
+        "dynamodb:DescribeTable",
+        "dynamodb:ListTables"
+      ],
+      "operations": [
+        "dynamodb:DescribeContinuousBackups",
+        "dynamodb:DescribeTable",
+        "dynamodb:ListTables"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.ec2",
+      "components": [
+        "adapter:ec2"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "ec2:DescribeAddresses",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInternetGateways",
+        "ec2:DescribeNatGateways",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeVpcEndpoints",
+        "ec2:DescribeVpcs"
+      ],
+      "operations": [
+        "ec2:DescribeAddresses",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInternetGateways",
+        "ec2:DescribeNatGateways",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeVpcEndpoints",
+        "ec2:DescribeVpcs"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.ecs",
+      "components": [
+        "adapter:ecs"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "ecs:DescribeClusters",
+        "ecs:DescribeServices",
+        "ecs:DescribeTasks",
+        "ecs:ListClusters",
+        "ecs:ListServices",
+        "ecs:ListTasks"
+      ],
+      "operations": [
+        "ecs:DescribeClusters",
+        "ecs:DescribeServices",
+        "ecs:DescribeTasks",
+        "ecs:ListClusters",
+        "ecs:ListServices",
+        "ecs:ListTasks"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.iam",
+      "components": [
+        "adapter:iam"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "iam:ListPolicies",
+        "iam:ListRoles",
+        "iam:ListUsers"
+      ],
+      "operations": [
+        "iam:ListPolicies",
+        "iam:ListRoles",
+        "iam:ListUsers"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "medium"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.lambda",
+      "components": [
+        "adapter:lambda"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "lambda:ListFunctions"
+      ],
+      "operations": [
+        "lambda:ListFunctions"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.rds",
+      "components": [
+        "adapter:rds"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "rds:DescribeDBClusters",
+        "rds:DescribeDBInstances",
+        "rds:DescribeDBSnapshots"
+      ],
+      "operations": [
+        "rds:DescribeDBClusters",
+        "rds:DescribeDBInstances",
+        "rds:DescribeDBSnapshots"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.resource_explorer",
+      "components": [
+        "aws.resource_explorer"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "resource-explorer-2:ListIndexes",
+        "resource-explorer-2:ListSupportedResourceTypes",
+        "resource-explorer-2:ListViews",
+        "resource-explorer-2:Search"
+      ],
+      "operations": [
+        "resource-explorer-2:ListIndexes",
+        "resource-explorer-2:ListSupportedResourceTypes",
+        "resource-explorer-2:ListViews",
+        "resource-explorer-2:Search"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "diagnosticar_cobertura_aws",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.route53",
+      "components": [
+        "adapter:route53"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "route53:ListHostedZones"
+      ],
+      "operations": [
+        "route53:ListHostedZones"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "analizar_actividad_recursos",
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.s3",
+      "components": [
+        "adapter:s3"
+      ],
+      "consent_required": true,
+      "cost_classifications": [
+        "potentially_billable"
+      ],
+      "iam_actions": [
+        "s3:ListAllMyBuckets"
+      ],
+      "operations": [
+        "s3:ListBuckets"
+      ],
+      "policy_targets": [
+        "consented-readonly"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.sns",
+      "components": [
+        "adapter:sns"
+      ],
+      "consent_required": true,
+      "cost_classifications": [
+        "potentially_billable"
+      ],
+      "iam_actions": [
+        "sns:ListSubscriptionsByTopic",
+        "sns:ListTopics"
+      ],
+      "operations": [
+        "sns:ListSubscriptionsByTopic",
+        "sns:ListTopics"
+      ],
+      "policy_targets": [
+        "consented-readonly"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.discovery.sqs",
+      "components": [
+        "adapter:sqs"
+      ],
+      "consent_required": true,
+      "cost_classifications": [
+        "potentially_billable"
+      ],
+      "iam_actions": [
+        "sqs:GetQueueAttributes",
+        "sqs:ListQueues"
+      ],
+      "operations": [
+        "sqs:GetQueueAttributes",
+        "sqs:ListQueues"
+      ],
+      "policy_targets": [
+        "consented-readonly"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "inventory.enrichment.s3",
+      "components": [
+        "adapter:s3",
+        "aws.resource_explorer"
+      ],
+      "consent_required": true,
+      "cost_classifications": [
+        "potentially_billable"
+      ],
+      "iam_actions": [
+        "s3:GetBucketLocation",
+        "s3:GetBucketLogging",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:GetBucketVersioning",
+        "s3:GetEncryptionConfiguration",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetReplicationConfiguration"
+      ],
+      "operations": [
+        "s3:GetBucketEncryption",
+        "s3:GetBucketLifecycleConfiguration",
+        "s3:GetBucketLocation",
+        "s3:GetBucketLogging",
+        "s3:GetBucketReplication",
+        "s3:GetBucketVersioning",
+        "s3:GetPublicAccessBlock"
+      ],
+      "policy_targets": [
+        "consented-readonly"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "listar_recursos_aws"
+      ]
+    },
+    {
+      "capability": "regions",
+      "components": [
+        "aws.regions"
+      ],
+      "consent_required": false,
+      "cost_classifications": [
+        "free"
+      ],
+      "iam_actions": [
+        "ec2:DescribeRegions"
+      ],
+      "operations": [
+        "ec2:DescribeRegions"
+      ],
+      "policy_targets": [
+        "free-only"
+      ],
+      "sensitive_data_risks": [
+        "low"
+      ],
+      "tools": [
+        "diagnosticar_cobertura_aws",
+        "listar_recursos_aws"
+      ]
+    }
+  ],
+  "generated_from": "aws_resource_mcp.aws.operations.OPERATION_REGISTRY",
+  "notes": [
+    "Alternative IAM actions are informational and are not granted.",
+    "STS GetCallerIdentity is intentionally absent from policies.",
+    "Application consent remains mandatory for consented operations.",
+    "Generated policies never change IAM automatically."
+  ],
+  "operation_count": 62,
+  "operations": [
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "development.policy_validation",
+      "component": "security.validation",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "unknown",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": "Remote validation is optional and its economic classification has not been confirmed; local validation is mandatory.",
+      "iam_actions": [
+        "access-analyzer:ValidatePolicy"
+      ],
+      "included_in_policies": [],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "validate_policy",
+      "operation": "ValidatePolicy",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/access-analyzer/access-analyzer.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "accessanalyzer",
+      "stage": "development",
+      "supports_resource_arn": false,
+      "tools": [],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.apigateway",
+      "component": "adapter:apigateway",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "apigateway:GET"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_rest_apis",
+      "operation": "GetRestApis",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/apigateway/apigateway.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "apigateway",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.apigateway",
+      "component": "adapter:apigateway",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "apigateway:GET"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_stages",
+      "operation": "GetStages",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/apigateway/apigateway.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "apigateway",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.apigateway",
+      "component": "adapter:apigateway",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "apigateway:GET"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_apis",
+      "operation": "GetApis",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/apigateway/apigateway.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "apigatewayv2",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.apigateway",
+      "component": "adapter:apigateway",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "apigateway:GET"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_stages",
+      "operation": "GetStages",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/apigateway/apigateway.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "apigatewayv2",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [
+        "aws-portal:ViewBilling"
+      ],
+      "capability": "cost_explorer.consented",
+      "component": "economics.cost_explorer",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ce:GetCostAndUsage"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_cost_and_usage",
+      "operation": "GetCostAndUsage",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ce/ce.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "ce",
+      "stage": "cost_explorer",
+      "supports_resource_arn": false,
+      "tools": [
+        "consultar_costes_aws",
+        "analizar_riesgo_costes"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The primary billing view is account-level and the current tool does not accept a billing view ARN."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [
+        "aws-portal:ViewBilling"
+      ],
+      "capability": "cost_explorer.future",
+      "component": "economics.cost_explorer",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": "Forecast and resource-level cost queries are registered but not implemented or authorizable in this phase.",
+      "iam_actions": [
+        "ce:GetCostAndUsageWithResources"
+      ],
+      "included_in_policies": [],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_cost_and_usage_with_resources",
+      "operation": "GetCostAndUsageWithResources",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ce/ce.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "ce",
+      "stage": "cost_explorer",
+      "supports_resource_arn": false,
+      "tools": [
+        "consultar_costes_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [
+        "aws-portal:ViewBilling"
+      ],
+      "capability": "cost_explorer.future",
+      "component": "economics.cost_explorer",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": "Forecast and resource-level cost queries are registered but not implemented or authorizable in this phase.",
+      "iam_actions": [
+        "ce:GetCostForecast"
+      ],
+      "included_in_policies": [],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_cost_forecast",
+      "operation": "GetCostForecast",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ce/ce.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "ce",
+      "stage": "cost_explorer",
+      "supports_resource_arn": false,
+      "tools": [
+        "consultar_costes_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.cloudformation",
+      "component": "adapter:cloudformation",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "cloudformation:ListStackResources"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_stack_resources",
+      "operation": "ListStackResources",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudformation/cloudformation.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "cloudformation",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.cloudformation",
+      "component": "adapter:cloudformation",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "cloudformation:ListStacks"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_stacks",
+      "operation": "ListStacks",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudformation/cloudformation.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "cloudformation",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.cloudfront",
+      "component": "adapter:cloudfront",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "cloudfront:ListDistributions"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_distributions",
+      "operation": "ListDistributions",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudfront/cloudfront.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "cloudfront",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "activity.free",
+      "component": "activity.cloudtrail",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "cloudtrail:LookupEvents"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "lookup_events",
+      "operation": "LookupEvents",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudtrail/cloudtrail.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "cloudtrail",
+      "stage": "activity",
+      "supports_resource_arn": false,
+      "tools": [
+        "analizar_actividad_recursos",
+        "diagnosticar_cobertura_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "activity.paid",
+      "component": "activity.cloudwatch",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": "CloudWatch enrichment is not executable through the current consent flow.",
+      "iam_actions": [
+        "cloudwatch:GetMetricData"
+      ],
+      "included_in_policies": [],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_metric_data",
+      "operation": "GetMetricData",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudwatch/cloudwatch.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "cloudwatch",
+      "stage": "activity",
+      "supports_resource_arn": false,
+      "tools": [
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "activity.paid",
+      "component": "activity.cloudwatch",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": "CloudWatch enrichment is not executable through the current consent flow.",
+      "iam_actions": [
+        "cloudwatch:GetMetricStatistics"
+      ],
+      "included_in_policies": [],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_metric_statistics",
+      "operation": "GetMetricStatistics",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudwatch/cloudwatch.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "cloudwatch",
+      "stage": "activity",
+      "supports_resource_arn": false,
+      "tools": [
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "activity.paid",
+      "component": "activity.cloudwatch",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": "CloudWatch enrichment is not executable through the current consent flow.",
+      "iam_actions": [
+        "cloudwatch:ListMetrics"
+      ],
+      "included_in_policies": [],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_metrics",
+      "operation": "ListMetrics",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/cloudwatch/cloudwatch.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "cloudwatch",
+      "stage": "activity",
+      "supports_resource_arn": false,
+      "tools": [
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.dynamodb",
+      "component": "adapter:dynamodb",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "dynamodb:DescribeContinuousBackups"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_continuous_backups",
+      "operation": "DescribeContinuousBackups",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/dynamodb/dynamodb.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "dynamodb",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [
+        "dynamodb:ReadDataForReplication",
+        "dynamodb:ReplicateSettings"
+      ],
+      "capability": "inventory.discovery.dynamodb",
+      "component": "adapter:dynamodb",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "dynamodb:DescribeTable"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_table",
+      "operation": "DescribeTable",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/dynamodb/dynamodb.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "dynamodb",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.dynamodb",
+      "component": "adapter:dynamodb",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "dynamodb:ListTables"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_tables",
+      "operation": "ListTables",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/dynamodb/dynamodb.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "dynamodb",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeAddresses"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_addresses",
+      "operation": "DescribeAddresses",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeInstances"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_instances",
+      "operation": "DescribeInstances",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeInternetGateways"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_internet_gateways",
+      "operation": "DescribeInternetGateways",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeNatGateways"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_nat_gateways",
+      "operation": "DescribeNatGateways",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "regions",
+      "component": "aws.regions",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeRegions"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_regions",
+      "operation": "DescribeRegions",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "diagnostics",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "diagnosticar_cobertura_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeRouteTables"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_route_tables",
+      "operation": "DescribeRouteTables",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeSubnets"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_subnets",
+      "operation": "DescribeSubnets",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeVolumes"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_volumes",
+      "operation": "DescribeVolumes",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeVpcEndpoints"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_vpc_endpoints",
+      "operation": "DescribeVpcEndpoints",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ec2",
+      "component": "adapter:ec2",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ec2:DescribeVpcs"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_vpcs",
+      "operation": "DescribeVpcs",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ec2/ec2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ec2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ecs",
+      "component": "adapter:ecs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ecs:DescribeClusters"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_clusters",
+      "operation": "DescribeClusters",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ecs/ecs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ecs",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ecs",
+      "component": "adapter:ecs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ecs:DescribeServices"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_services",
+      "operation": "DescribeServices",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ecs/ecs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ecs",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ecs",
+      "component": "adapter:ecs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ecs:DescribeTasks"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_tasks",
+      "operation": "DescribeTasks",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ecs/ecs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ecs",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ecs",
+      "component": "adapter:ecs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ecs:ListClusters"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_clusters",
+      "operation": "ListClusters",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ecs/ecs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ecs",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ecs",
+      "component": "adapter:ecs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ecs:ListServices"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_services",
+      "operation": "ListServices",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ecs/ecs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ecs",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.ecs",
+      "component": "adapter:ecs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "ecs:ListTasks"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_tasks",
+      "operation": "ListTasks",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/ecs/ecs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "ecs",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "free_tier",
+      "component": "economics.free_tier",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "freetier:GetAccountPlanState"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_account_plan_state",
+      "operation": "GetAccountPlanState",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/freetier/freetier.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "freetier",
+      "stage": "free_tier",
+      "supports_resource_arn": false,
+      "tools": [
+        "revisar_free_tier",
+        "analizar_riesgo_costes"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Free Tier is an account-level API and does not support resource ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [
+        "aws-portal:ViewBilling"
+      ],
+      "capability": "free_tier",
+      "component": "economics.free_tier",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "freetier:GetFreeTierUsage"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_free_tier_usage",
+      "operation": "GetFreeTierUsage",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/freetier/freetier.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "freetier",
+      "stage": "free_tier",
+      "supports_resource_arn": false,
+      "tools": [
+        "revisar_free_tier",
+        "analizar_riesgo_costes"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Free Tier is an account-level API and does not support resource ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.iam",
+      "component": "adapter:iam",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "iam:ListPolicies"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_policies",
+      "operation": "ListPolicies",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/iam/iam.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "iam",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "IAM list operations do not support resource-level permissions; responses are minimized and anonymized by the MCP."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.iam",
+      "component": "adapter:iam",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "iam:ListRoles"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_roles",
+      "operation": "ListRoles",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/iam/iam.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "iam",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "IAM list operations do not support resource-level permissions; responses are minimized and anonymized by the MCP."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.iam",
+      "component": "adapter:iam",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "iam:ListUsers"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_users",
+      "operation": "ListUsers",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/iam/iam.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "iam",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "IAM list operations do not support resource-level permissions; responses are minimized and anonymized by the MCP."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "development.policy_simulation",
+      "component": "security.validation",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "unknown",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": "Remote simulation is optional and its economic classification has not been confirmed.",
+      "iam_actions": [
+        "iam:SimulateCustomPolicy"
+      ],
+      "included_in_policies": [],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "simulate_custom_policy",
+      "operation": "SimulateCustomPolicy",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/iam/iam.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "medium",
+      "service": "iam",
+      "stage": "development",
+      "supports_resource_arn": false,
+      "tools": [],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.lambda",
+      "component": "adapter:lambda",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "lambda:ListFunctions"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_functions",
+      "operation": "ListFunctions",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/lambda/lambda.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "lambda",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.rds",
+      "component": "adapter:rds",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "rds:DescribeDBClusters"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_db_clusters",
+      "operation": "DescribeDBClusters",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/rds/rds.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "rds",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.rds",
+      "component": "adapter:rds",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "rds:DescribeDBInstances"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_db_instances",
+      "operation": "DescribeDBInstances",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/rds/rds.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "rds",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.rds",
+      "component": "adapter:rds",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "rds:DescribeDBSnapshots"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "describe_db_snapshots",
+      "operation": "DescribeDBSnapshots",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/rds/rds.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "rds",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.resource_explorer",
+      "component": "aws.resource_explorer",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "resource-explorer-2:ListIndexes"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_indexes",
+      "operation": "ListIndexes",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/resource-explorer-2/resource-explorer-2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "resource-explorer-2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "diagnosticar_cobertura_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.resource_explorer",
+      "component": "aws.resource_explorer",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "resource-explorer-2:ListSupportedResourceTypes"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_supported_resource_types",
+      "operation": "ListSupportedResourceTypes",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/resource-explorer-2/resource-explorer-2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "resource-explorer-2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "diagnosticar_cobertura_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.resource_explorer",
+      "component": "aws.resource_explorer",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "resource-explorer-2:ListViews"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_views",
+      "operation": "ListViews",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/resource-explorer-2/resource-explorer-2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "resource-explorer-2",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "diagnosticar_cobertura_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.resource_explorer",
+      "component": "aws.resource_explorer",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "resource-explorer-2:Search"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "search",
+      "operation": "Search",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/resource-explorer-2/resource-explorer-2.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "resource-explorer-2",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws",
+        "diagnosticar_cobertura_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.route53",
+      "component": "adapter:route53",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "route53:ListHostedZones"
+      ],
+      "included_in_policies": [
+        "free-only",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_hosted_zones",
+      "operation": "ListHostedZones",
+      "policy_target": "free-only",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/route53/route53.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "route53",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws",
+        "analizar_actividad_recursos"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.enrichment.s3",
+      "component": "adapter:s3",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:GetEncryptionConfiguration"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_bucket_encryption",
+      "operation": "GetBucketEncryption",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "enrichment",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Buckets are discovered dynamically; a deployment-specific policy may replace '*' with reviewed bucket ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.enrichment.s3",
+      "component": "adapter:s3",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:GetLifecycleConfiguration"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_bucket_lifecycle_configuration",
+      "operation": "GetBucketLifecycleConfiguration",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "enrichment",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Buckets are discovered dynamically; a deployment-specific policy may replace '*' with reviewed bucket ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.enrichment.s3",
+      "component": "aws.resource_explorer",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:GetBucketLocation"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_bucket_location",
+      "operation": "GetBucketLocation",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "enrichment",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The generic inventory can discover buckets dynamically and no bucket allowlist is configured in the generated portable policy."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.enrichment.s3",
+      "component": "adapter:s3",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:GetBucketLogging"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_bucket_logging",
+      "operation": "GetBucketLogging",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "enrichment",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Buckets are discovered dynamically; a deployment-specific policy may replace '*' with reviewed bucket ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.enrichment.s3",
+      "component": "adapter:s3",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:GetReplicationConfiguration"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_bucket_replication",
+      "operation": "GetBucketReplication",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "enrichment",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Buckets are discovered dynamically; a deployment-specific policy may replace '*' with reviewed bucket ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.enrichment.s3",
+      "component": "adapter:s3",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:GetBucketVersioning"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_bucket_versioning",
+      "operation": "GetBucketVersioning",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "enrichment",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Buckets are discovered dynamically; a deployment-specific policy may replace '*' with reviewed bucket ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.enrichment.s3",
+      "component": "adapter:s3",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:GetBucketPublicAccessBlock"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_public_access_block",
+      "operation": "GetPublicAccessBlock",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "enrichment",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Buckets are discovered dynamically; a deployment-specific policy may replace '*' with reviewed bucket ARNs."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.s3",
+      "component": "adapter:s3",
+      "condition_keys": [],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "s3:ListAllMyBuckets"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_buckets",
+      "operation": "ListBuckets",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/s3/s3.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "s3",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "Listing account buckets occurs before bucket ARNs are known and ListAllMyBuckets requires Resource '*'."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.sns",
+      "component": "adapter:sns",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "sns:ListSubscriptionsByTopic"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_subscriptions_by_topic",
+      "operation": "ListSubscriptionsByTopic",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/sns/sns.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "sns",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.sns",
+      "component": "adapter:sns",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "sns:ListTopics"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_topics",
+      "operation": "ListTopics",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/sns/sns.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "sns",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.sqs",
+      "component": "adapter:sqs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "sqs:GetQueueAttributes"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "get_queue_attributes",
+      "operation": "GetQueueAttributes",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/sqs/sqs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "sqs",
+      "stage": "discovery",
+      "supports_resource_arn": true,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "inventory.discovery.sqs",
+      "component": "adapter:sqs",
+      "condition_keys": [
+        "aws:RequestedRegion"
+      ],
+      "consent_required": true,
+      "cost_classification": "potentially_billable",
+      "dependent_actions": [],
+      "enabled_in_free_only": false,
+      "exclusion_reason": null,
+      "iam_actions": [
+        "sqs:ListQueues"
+      ],
+      "included_in_policies": [
+        "consented-readonly",
+        "combined-readonly",
+        "permissions-boundary"
+      ],
+      "justification": "Required by an implemented read-only MCP capability.",
+      "method": "list_queues",
+      "operation": "ListQueues",
+      "policy_target": "consented-readonly",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/sqs/sqs.json",
+      "resource_scope": "all",
+      "scope": "regional",
+      "sensitive_data_risk": "low",
+      "service": "sqs",
+      "stage": "discovery",
+      "supports_resource_arn": false,
+      "tools": [
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    },
+    {
+      "access": "read",
+      "alternative_iam_actions": [],
+      "capability": "identity",
+      "component": "aws.identity",
+      "condition_keys": [],
+      "consent_required": false,
+      "cost_classification": "free",
+      "dependent_actions": [],
+      "enabled_in_free_only": true,
+      "exclusion_reason": "AWS documents that GetCallerIdentity returns caller information without an explicit Allow statement.",
+      "iam_actions": [
+        "sts:GetCallerIdentity"
+      ],
+      "included_in_policies": [],
+      "justification": "Binds results and consent to the current caller identity.",
+      "method": "get_caller_identity",
+      "operation": "GetCallerIdentity",
+      "policy_target": "excluded",
+      "reference_url": "https://servicereference.us-east-1.amazonaws.com/v1/sts/sts.json",
+      "resource_scope": "all",
+      "scope": "global",
+      "sensitive_data_risk": "low",
+      "service": "sts",
+      "stage": "identity",
+      "supports_resource_arn": false,
+      "tools": [
+        "health_check",
+        "listar_recursos_aws"
+      ],
+      "verified_at": "2026-07-23",
+      "wildcard_justification": "The operation discovers resources before their ARNs are known or does not support resource-level IAM permissions."
+    }
+  ],
+  "policy_version": "2012-10-17",
+  "prohibited_actions": {
+    "sensitive_content": [
+      "dynamodb:GetItem",
+      "dynamodb:Query",
+      "dynamodb:Scan",
+      "ecr:BatchGetImage",
+      "kms:Decrypt",
+      "lambda:GetFunction",
+      "lambda:InvokeFunction",
+      "logs:FilterLogEvents",
+      "logs:GetLogEvents",
+      "s3:GetObject",
+      "secretsmanager:GetSecretValue",
+      "sqs:ReceiveMessage",
+      "ssm:GetParameter",
+      "ssm:GetParameters"
+    ],
+    "write": [
+      "ec2:StartInstances",
+      "ec2:StopInstances",
+      "ec2:TerminateInstances",
+      "iam:AttachRolePolicy",
+      "iam:CreateRole",
+      "iam:PassRole",
+      "lambda:UpdateFunctionConfiguration",
+      "s3:DeleteBucket",
+      "s3:DeleteObject",
+      "s3:PutBucketPolicy",
+      "s3:PutObject",
+      "sns:Publish",
+      "sqs:SendMessage"
+    ]
+  },
+  "schema_version": 1
+}
