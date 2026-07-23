@@ -203,7 +203,7 @@ def test_all_adapters_use_one_diagnostic_shape_and_registry() -> None:
     assert set(adapters["lambda"]) == common_keys
     assert set(adapters["s3"]) == common_keys
     assert set(adapters["rds"]) == common_keys
-    assert adapters["s3"]["status"] == "blocked_by_cost_policy"
+    assert adapters["s3"]["status"] == "pending_consent"
     assert adapters["lambda"]["status"] == "available"
 
 

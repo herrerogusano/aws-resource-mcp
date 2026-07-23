@@ -31,7 +31,8 @@ def inventory(
             "regions_enabled": ["eu-west-1"],
             "resource_explorer": {
                 "available": coverage_status != "unavailable",
-                "aggregator_index": coverage_status == "complete_for_supported_resources",
+                "aggregator_index": coverage_status
+                == "complete_for_supported_resources",
             },
         },
         "errors": [] if errors is None else errors,
@@ -46,7 +47,7 @@ def test_global_inventory_has_compatible_and_expanded_fields(collect: Mock) -> N
     ]
     collect.return_value = inventory(general=resources)
     result = listar_recursos_aws()
-    assert result["status"] == "ok"
+    assert result["status"] == "complete_for_requested_scope"
     assert result["summary"]["total_resources"] == 2
     assert result["summary"]["services_detected"] == 2
     assert result["summary"]["partial"] is False
@@ -80,6 +81,7 @@ def test_service_filtering_and_normalization(
         include_details=True,
         include_cost_indicators=True,
         confirm_potentially_billable_operations=False,
+        timeout_seconds=30.0,
     )
 
 
@@ -95,6 +97,7 @@ def test_region_type_query_and_all_regions_filters(collect: Mock) -> None:
         include_details=True,
         include_cost_indicators=True,
         confirm_potentially_billable_operations=False,
+        timeout_seconds=30.0,
     )
     collect.assert_called_once_with(
         "eu-central-1",
@@ -105,6 +108,7 @@ def test_region_type_query_and_all_regions_filters(collect: Mock) -> None:
         include_details=True,
         include_cost_indicators=True,
         confirm_potentially_billable_operations=False,
+        timeout_seconds=30.0,
     )
 
 
@@ -127,9 +131,10 @@ def test_invalid_region_type_and_query_return_controlled_errors(collect: Mock) -
     assert listar_recursos_aws(query=123)["status"] == "error"
     assert listar_recursos_aws(include_details="yes")["status"] == "error"
     assert listar_recursos_aws(include_cost_indicators=1)["status"] == "error"
-    assert listar_recursos_aws(
-        confirm_potentially_billable_operations="yes"
-    )["status"] == "error"
+    assert (
+        listar_recursos_aws(confirm_potentially_billable_operations="yes")["status"]
+        == "error"
+    )
     collect.assert_not_called()
 
 
@@ -154,13 +159,16 @@ def test_activity_summary_uses_only_existing_inventory_fields(
 ) -> None:
     item = {"service": "ec2", "name": "instance", "activity": {"status": "unknown"}}
     collect.return_value = inventory(general=[item])
-    attach.return_value = [{
-        **item,
-        "activity": {
-            "status": "active", "source": "ec2_api",
-            "paid_data_executed": False,
-        },
-    }]
+    attach.return_value = [
+        {
+            **item,
+            "activity": {
+                "status": "active",
+                "source": "ec2_api",
+                "paid_data_executed": False,
+            },
+        }
+    ]
 
     result = listar_recursos_aws(include_activity_summary=True)
 
@@ -183,7 +191,7 @@ def test_partial_coverage_and_service_error_are_preserved(collect: Mock) -> None
         coverage_status="partial",
     )
     result = listar_recursos_aws()
-    assert result["status"] == "partial"
+    assert result["status"] == "partial_permission_denied"
     assert result["summary"]["partial"] is True
     assert result["errors"][0]["type"] == "access_denied"
 
@@ -196,7 +204,7 @@ def test_unavailable_resource_explorer_has_no_service_specific_fallback(
         coverage_status="unavailable",
     )
     result = listar_recursos_aws()
-    assert result["status"] == "partial"
+    assert result["status"] == "partial_unavailable"
     assert result["resources"] == {}
     assert result["all_resources"] == []
     assert result["coverage"]["status"] == "unavailable"
