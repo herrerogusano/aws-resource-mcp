@@ -54,6 +54,7 @@ def _context(responses: dict[tuple[str, str], list[dict] | dict] | None = None) 
 
     def call(service: str, operation: str, **parameters: object) -> dict:
         parameters.pop("region", None)
+        parameters.pop("pagination", None)
         model = service_models.setdefault(
             service, get_session().get_service_model(service)
         )

@@ -4,8 +4,13 @@ from collections.abc import Collection
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Literal, Protocol, runtime_checkable
 
-from aws_resource_mcp.aws.operations import OperationGuard
-from aws_resource_mcp.models import ActivityConfidence, ActivityType, InventoryError, Resource
+from aws_resource_mcp.aws.operations import OperationGuard, OperationLimitError
+from aws_resource_mcp.models import (
+    ActivityConfidence,
+    ActivityType,
+    InventoryError,
+    Resource,
+)
 
 Scope = Literal["regional", "global"]
 
@@ -31,6 +36,13 @@ class AdapterMetadata:
     detail_fields: tuple[str, ...] = ()
     cost_indicator_types: tuple[str, ...] = ()
     activity_fields: tuple[ActivityField, ...] = ()
+    discovery_operations: tuple[tuple[str, str], ...] = ()
+    enrichment_operations: tuple[tuple[str, str], ...] = ()
+    paginated_operations: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        if not self.discovery_operations:
+            object.__setattr__(self, "discovery_operations", self.operations)
 
 
 @dataclass
@@ -44,6 +56,9 @@ class AdapterContext:
     include_cost_indicators: bool = True
     errors: list[InventoryError] = field(default_factory=list)
     operations_executed: list[dict[str, str]] = field(default_factory=list)
+    truncations: list[dict[str, Any]] = field(default_factory=list)
+    resume_tokens: dict[str, str] = field(default_factory=dict)
+    continuation_tokens: dict[str, str] = field(default_factory=dict)
 
     def call(
         self,
@@ -51,13 +66,20 @@ class AdapterContext:
         operation: str,
         *,
         region: str | None = None,
+        pagination: bool = False,
         **parameters: Any,
     ) -> Any:
-        client = self.session.client(service, region_name=region) if region else self.session.client(service)
+        client = (
+            self.session.client(service, region_name=region)
+            if region
+            else self.session.client(service)
+        )
         response = self.operation_guard.call(
             client,
             service=service,
             operation=operation,
+            region=region or "global",
+            pagination=pagination,
             **parameters,
         )
         self.operations_executed.append(
@@ -122,55 +144,63 @@ class BaseAdapter:
             resource_ids = _resource_aliases(resource)
             created_at = resource.get("created_at")
             if created_at:
-                signals.append({
-                    "timestamp": created_at,
-                    "activity_type": "configuration_change",
-                    "activity_name": "ResourceCreated",
-                    "source": f"{self.metadata.service_name}_api",
-                    "confidence": "low",
-                    "region": resource.get("region") or "global",
-                    "resource_ids": resource_ids,
-                    "category": "create",
-                })
+                signals.append(
+                    {
+                        "timestamp": created_at,
+                        "activity_type": "configuration_change",
+                        "activity_name": "ResourceCreated",
+                        "source": f"{self.metadata.service_name}_api",
+                        "confidence": "low",
+                        "region": resource.get("region") or "global",
+                        "resource_ids": resource_ids,
+                        "category": "create",
+                    }
+                )
             state = resource.get("state")
             if state:
-                signals.append({
-                    "timestamp": None,
-                    "activity_type": "resource_state",
-                    "activity_name": f"CurrentState:{state}",
-                    "source": f"{self.metadata.service_name}_api",
-                    "confidence": "low",
-                    "region": resource.get("region") or "global",
-                    "resource_ids": resource_ids,
-                    "category": "state",
-                })
+                signals.append(
+                    {
+                        "timestamp": None,
+                        "activity_type": "resource_state",
+                        "activity_name": f"CurrentState:{state}",
+                        "source": f"{self.metadata.service_name}_api",
+                        "confidence": "low",
+                        "region": resource.get("region") or "global",
+                        "resource_ids": resource_ids,
+                        "category": "state",
+                    }
+                )
             details = resource.get("details", {})
             for activity_field in self.metadata.activity_fields:
                 timestamp = details.get(activity_field.field)
                 if timestamp:
-                    signals.append({
-                        "timestamp": timestamp,
-                        "activity_type": activity_field.activity_type,
-                        "activity_name": activity_field.activity_name,
-                        "source": f"{self.metadata.service_name}_api",
-                        "confidence": activity_field.confidence,
-                        "region": resource.get("region") or "global",
-                        "resource_ids": resource_ids,
-                        "category": (
-                            "access"
-                            if activity_field.activity_type == "functional_usage"
-                            else "update"
-                        ),
-                    })
+                    signals.append(
+                        {
+                            "timestamp": timestamp,
+                            "activity_type": activity_field.activity_type,
+                            "activity_name": activity_field.activity_name,
+                            "source": f"{self.metadata.service_name}_api",
+                            "confidence": activity_field.confidence,
+                            "region": resource.get("region") or "global",
+                            "resource_ids": resource_ids,
+                            "category": (
+                                "access"
+                                if activity_field.activity_type == "functional_usage"
+                                else "update"
+                            ),
+                        }
+                    )
         return signals
 
 
 def _resource_aliases(resource: Resource) -> list[str]:
-    return list(dict.fromkeys(
-        str(value)
-        for value in (resource.get("arn"), resource.get("id"), resource.get("name"))
-        if value
-    ))
+    return list(
+        dict.fromkeys(
+            str(value)
+            for value in (resource.get("arn"), resource.get("id"), resource.get("name"))
+            if value
+        )
+    )
 
 
 def pages(
@@ -187,11 +217,39 @@ def pages(
     """Execute every page through the operation guard."""
     results: list[Any] = []
     token: str | None = None
+    token_key = f"{service}:{operation}:{region or 'global'}"
+    resume_tokens = getattr(context, "resume_tokens", {})
+    truncations = getattr(context, "truncations", [])
+    continuation_tokens = getattr(context, "continuation_tokens", {})
+    token = resume_tokens.get(token_key)
+    resumed = token is not None
     while True:
         request = dict(parameters or {})
         if token:
             request[request_token] = token
-        response = context.call(service, operation, region=region, **request)
+        try:
+            response = context.call(
+                service,
+                operation,
+                region=region,
+                pagination=bool(token) and not resumed,
+                **request,
+            )
+        except OperationLimitError as error:
+            truncations.append(
+                {
+                    "service": service,
+                    "operation": operation,
+                    "region": region or "global",
+                    "error_type": "operation_truncated",
+                    "message": error.error["message"],
+                    "executed": False,
+                }
+            )
+            if token:
+                continuation_tokens[token_key] = token
+            return results
+        resumed = False
         container = response.get(result_key, [])
         value = container
         if isinstance(container, dict) and "Items" in container:

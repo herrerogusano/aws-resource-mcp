@@ -9,6 +9,7 @@ from aws_resource_mcp.aws.operations import (
     OperationBlockedError,
     OperationGuard,
     OperationSpec,
+    ScopedOperationAuthorization,
 )
 
 
@@ -16,9 +17,7 @@ def test_registered_free_operation_executes_through_guard() -> None:
     client = Mock()
     client.list_functions.return_value = {"Functions": []}
 
-    result = OperationGuard().call(
-        client, service="lambda", operation="ListFunctions"
-    )
+    result = OperationGuard().call(client, service="lambda", operation="ListFunctions")
 
     assert result == {"Functions": []}
     client.list_functions.assert_called_once_with()
@@ -59,7 +58,7 @@ def test_unknown_and_write_operations_are_always_blocked(
     client.operation.assert_not_called()
 
 
-def test_potentially_billable_requires_mode_and_confirmation(
+def test_potentially_billable_requires_exact_scoped_authorization(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     spec = OperationSpec(
@@ -75,9 +74,18 @@ def test_potentially_billable_requires_mode_and_confirmation(
         OperationGuard("allow-paid-with-confirmation").call(
             client, service="example", operation="Read"
         )
-    assert OperationGuard(
-        "allow-paid-with-confirmation", paid_operations_confirmed=True
-    ).call(client, service="example", operation="Read") == {"ok": True}
+    with pytest.raises(OperationBlockedError):
+        OperationGuard(
+            "allow-paid-with-confirmation", paid_operations_confirmed=True
+        ).call(client, service="example", operation="Read")
+    authorization = ScopedOperationAuthorization(
+        allowed_operations=frozenset({("example", "Read")}),
+        allowed_regions=frozenset(),
+        max_requests=1,
+    )
+    assert OperationGuard(scoped_authorization=authorization).call(
+        client, service="example", operation="Read"
+    ) == {"ok": True}
     client.read.assert_called_once_with()
 
 

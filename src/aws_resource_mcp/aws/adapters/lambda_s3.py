@@ -33,9 +33,11 @@ class LambdaAdapter(BaseAdapter):
             "vpc_id",
         ),
         cost_indicator_types=("high_memory", "additional_ephemeral_storage"),
-        activity_fields=(ActivityField(
-            "last_modified", "configuration_change", "LastModified", "medium"
-        ),),
+        activity_fields=(
+            ActivityField(
+                "last_modified", "configuration_change", "LastModified", "medium"
+            ),
+        ),
     )
 
     def discover(self, context: AdapterContext) -> list[Resource]:
@@ -54,7 +56,11 @@ class LambdaAdapter(BaseAdapter):
                 memory = function.get("MemorySize")
                 ephemeral = function.get("EphemeralStorage", {}).get("Size")
                 indicators = []
-                if context.include_cost_indicators and isinstance(memory, int) and memory >= 3008:
+                if (
+                    context.include_cost_indicators
+                    and isinstance(memory, int)
+                    and memory >= 3008
+                ):
                     indicators.append(
                         cost_indicator(
                             "high_memory",
@@ -62,7 +68,11 @@ class LambdaAdapter(BaseAdapter):
                             "High configured memory can increase compute charges per invocation.",
                         )
                     )
-                if context.include_cost_indicators and isinstance(ephemeral, int) and ephemeral > 512:
+                if (
+                    context.include_cost_indicators
+                    and isinstance(ephemeral, int)
+                    and ephemeral > 512
+                ):
                     indicators.append(
                         cost_indicator(
                             "additional_ephemeral_storage",
@@ -70,18 +80,22 @@ class LambdaAdapter(BaseAdapter):
                             "Ephemeral storage above the included baseline can generate charges.",
                         )
                     )
-                details = {
-                    "runtime": function.get("Runtime"),
-                    "memory_mb": memory,
-                    "timeout_seconds": function.get("Timeout"),
-                    "architectures": list(function.get("Architectures", [])),
-                    "code_size_bytes": function.get("CodeSize"),
-                    "package_type": function.get("PackageType"),
-                    "ephemeral_storage_mb": ephemeral,
-                    "last_modified": function.get("LastModified"),
-                    "layers_count": len(function.get("Layers", [])),
-                    "vpc_id": function.get("VpcConfig", {}).get("VpcId"),
-                } if context.include_details else {}
+                details = (
+                    {
+                        "runtime": function.get("Runtime"),
+                        "memory_mb": memory,
+                        "timeout_seconds": function.get("Timeout"),
+                        "architectures": list(function.get("Architectures", [])),
+                        "code_size_bytes": function.get("CodeSize"),
+                        "package_type": function.get("PackageType"),
+                        "ephemeral_storage_mb": ephemeral,
+                        "last_modified": function.get("LastModified"),
+                        "layers_count": len(function.get("Layers", [])),
+                        "vpc_id": function.get("VpcConfig", {}).get("VpcId"),
+                    }
+                    if context.include_details
+                    else {}
+                )
                 resources.append(
                     make_resource(
                         service="lambda",
@@ -128,7 +142,6 @@ class S3Adapter(BaseAdapter):
         scope="global",
         operations=(
             ("s3", "ListBuckets"),
-            ("s3", "GetBucketLocation"),
             ("s3", "GetBucketVersioning"),
             ("s3", "GetBucketLifecycleConfiguration"),
             ("s3", "GetBucketReplication"),
@@ -145,21 +158,71 @@ class S3Adapter(BaseAdapter):
             "encryption",
             "public_access_block",
         ),
-        cost_indicator_types=("versioned_storage", "replicated_storage", "access_logging"),
+        cost_indicator_types=(
+            "versioned_storage",
+            "replicated_storage",
+            "access_logging",
+        ),
+        discovery_operations=(("s3", "ListBuckets"),),
+        enrichment_operations=(
+            ("s3", "GetBucketVersioning"),
+            ("s3", "GetBucketLifecycleConfiguration"),
+            ("s3", "GetBucketReplication"),
+            ("s3", "GetBucketLogging"),
+            ("s3", "GetBucketEncryption"),
+            ("s3", "GetPublicAccessBlock"),
+        ),
+        paginated_operations=(("s3", "ListBuckets"),),
     )
 
     def discover(self, context: AdapterContext) -> list[Resource]:
-        buckets = context.call("s3", "ListBuckets").get("Buckets", [])
+        buckets = pages(
+            context,
+            "s3",
+            "ListBuckets",
+            "Buckets",
+            parameters={"MaxBuckets": 1000},
+            request_token="ContinuationToken",
+            response_token="ContinuationToken",
+        )
         resources: list[Resource] = []
         for bucket in buckets:
             name = bucket.get("Name")
             if not name:
                 continue
-            location = context.call("s3", "GetBucketLocation", Bucket=name).get(
-                "LocationConstraint"
-            ) or "us-east-1"
-            versioning = context.call("s3", "GetBucketVersioning", Bucket=name).get("Status")
-            lifecycle = _optional_bucket_call(context, "GetBucketLifecycleConfiguration", name)
+            resources.append(
+                make_resource(
+                    service="s3",
+                    resource_type="AWS::S3::Bucket",
+                    region=bucket.get("BucketRegion") or "global",
+                    source="s3_api",
+                    identifier=name,
+                    arn=bucket.get("BucketArn") or f"arn:aws:s3:::{name}",
+                    name=name,
+                    account_id=context.account_id,
+                    state="available",
+                    created_at=bucket.get("CreationDate"),
+                )
+            )
+        return resources
+
+    def enrich(
+        self,
+        resources: list[Resource],
+        context: AdapterContext,
+    ) -> list[Resource]:
+        enriched: list[Resource] = []
+        for resource in resources:
+            name = resource.get("name") or resource.get("id")
+            if not name:
+                enriched.append(resource)
+                continue
+            versioning = context.call("s3", "GetBucketVersioning", Bucket=name).get(
+                "Status"
+            )
+            lifecycle = _optional_bucket_call(
+                context, "GetBucketLifecycleConfiguration", name
+            )
             replication = _optional_bucket_call(context, "GetBucketReplication", name)
             logging = _optional_bucket_call(context, "GetBucketLogging", name)
             encryption = _optional_bucket_call(context, "GetBucketEncryption", name)
@@ -181,7 +244,11 @@ class S3Adapter(BaseAdapter):
                         "Replication can multiply storage and transfer usage.",
                     )
                 )
-            if context.include_cost_indicators and logging and logging.get("LoggingEnabled"):
+            if (
+                context.include_cost_indicators
+                and logging
+                and logging.get("LoggingEnabled")
+            ):
                 indicators.append(
                     cost_indicator(
                         "access_logging",
@@ -189,32 +256,27 @@ class S3Adapter(BaseAdapter):
                         "Access logging writes additional objects that consume storage.",
                     )
                 )
-            details = {
-                "versioning": (versioning or "disabled").lower(),
-                "lifecycle_configuration": bool(lifecycle),
-                "replication": bool(replication),
-                "logging": bool(logging and logging.get("LoggingEnabled")),
-                "encryption": bool(encryption),
-                "public_access_block": (
-                    public_access.get("PublicAccessBlockConfiguration", {})
-                    if public_access
-                    else {}
-                ),
-            } if context.include_details else {}
-            resources.append(
-                make_resource(
-                    service="s3",
-                    resource_type="AWS::S3::Bucket",
-                    region=location,
-                    source="s3_api",
-                    identifier=name,
-                    arn=f"arn:aws:s3:::{name}",
-                    name=name,
-                    account_id=context.account_id,
-                    state="available",
-                    created_at=bucket.get("CreationDate"),
-                    details=details,
-                    cost_indicators=indicators,
-                )
+            details = (
+                {
+                    "versioning": (versioning or "disabled").lower(),
+                    "lifecycle_configuration": bool(lifecycle),
+                    "replication": bool(replication),
+                    "logging": bool(logging and logging.get("LoggingEnabled")),
+                    "encryption": bool(encryption),
+                    "public_access_block": (
+                        public_access.get("PublicAccessBlockConfiguration", {})
+                        if public_access
+                        else {}
+                    ),
+                }
+                if context.include_details
+                else {}
             )
-        return resources
+            enriched.append(
+                {
+                    **resource,
+                    "details": details,
+                    "cost_indicators": indicators,
+                }
+            )
+        return enriched

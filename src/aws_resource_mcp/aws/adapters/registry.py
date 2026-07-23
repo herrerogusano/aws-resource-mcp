@@ -56,6 +56,15 @@ def validate_registry() -> None:
     for adapter in ADAPTERS.values():
         if not isinstance(adapter, ResourceAdapter):
             raise TypeError(f"{adapter!r} does not implement ResourceAdapter")
+        staged_operations = {
+            *adapter.metadata.discovery_operations,
+            *adapter.metadata.enrichment_operations,
+        }
+        if staged_operations != set(adapter.metadata.operations):
+            raise ValueError(
+                f"{adapter.metadata.service_name} must classify every operation "
+                "as discovery or enrichment"
+            )
         for operation in adapter.metadata.operations:
             if operation not in OPERATION_REGISTRY:
                 raise ValueError(

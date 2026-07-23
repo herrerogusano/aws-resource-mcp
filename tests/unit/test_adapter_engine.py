@@ -1,6 +1,7 @@
 """Tests for uniform adapter execution, fallback, and merging."""
 
 from dataclasses import dataclass
+from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
@@ -8,7 +9,7 @@ import pytest
 from aws_resource_mcp.aws import adapter_engine
 from aws_resource_mcp.aws.adapters import registry
 from aws_resource_mcp.aws.adapters.base import AdapterContext, AdapterMetadata
-from aws_resource_mcp.aws.operations import OperationGuard
+from aws_resource_mcp.aws.operations import OperationGuard, ScopedOperationAuthorization
 from aws_resource_mcp.models import Resource, make_resource
 
 
@@ -178,9 +179,114 @@ def test_metered_adapter_operations_are_blocked_before_boto3(
         operation_guard=OperationGuard(),
     )
 
-    assert result["coverage"]["failed"] == [service]
-    assert result["errors"][0]["executed"] is False
+    assert result["coverage"]["failed"] == []
+    assert result["coverage"]["pending_consent"] == [service]
+    assert result["coverage"]["pending_operations"][0]["stage"] == "discovery"
     getattr(client, method).assert_not_called()
+
+
+def test_scoped_s3_discovery_is_minimal_and_truncates_before_second_page() -> None:
+    client = Mock()
+    client.list_buckets.return_value = {
+        "Buckets": [{
+            "Name": "example",
+            "BucketArn": "arn:aws:s3:::example",
+            "BucketRegion": "eu-west-1",
+        }],
+        "ContinuationToken": "next",
+    }
+    session = Mock()
+    session.client.return_value = client
+    authorization = ScopedOperationAuthorization(
+        allowed_operations=frozenset({("s3", "ListBuckets")}),
+        allowed_regions=frozenset(),
+        max_requests=1,
+        max_additional_pages=0,
+    )
+
+    result = adapter_engine.execute_adapters(
+        session, account_id="account", regions=["eu-west-1"],
+        primary_region="eu-west-1", discovered_resources=[], services=["s3"],
+        include_details=True, include_cost_indicators=True,
+        operation_guard=OperationGuard(scoped_authorization=authorization),
+    )
+
+    assert [item["name"] for item in result["resources"]] == ["example"]
+    assert result["coverage"]["truncated"] is True
+    assert result["coverage"]["continuation_tokens"] == {
+        "s3:ListBuckets:global": "next"
+    }
+    assert authorization.requests_executed == 1
+    client.get_bucket_versioning.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("service", "operation", "method", "response", "enrichment_method"),
+    [
+        (
+            "sqs", "ListQueues", "list_queues",
+            {"QueueUrls": ["https://sqs.eu-west-1.amazonaws.com/account/queue"]},
+            "get_queue_attributes",
+        ),
+        (
+            "sns", "ListTopics", "list_topics",
+            {"Topics": [{"TopicArn": "arn:aws:sns:eu-west-1:account:topic"}]},
+            "list_subscriptions_by_topic",
+        ),
+    ],
+)
+def test_scoped_regional_discovery_does_not_authorize_enrichment(
+    service: str,
+    operation: str,
+    method: str,
+    response: dict,
+    enrichment_method: str,
+) -> None:
+    client = Mock()
+    getattr(client, method).return_value = response
+    session = Mock()
+    session.client.return_value = client
+    authorization = ScopedOperationAuthorization(
+        allowed_operations=frozenset({(service, operation)}),
+        allowed_regions=frozenset({"eu-west-1"}),
+        max_requests=1,
+    )
+
+    result = adapter_engine.execute_adapters(
+        session, account_id="account", regions=["eu-west-1"],
+        primary_region="eu-west-1", discovered_resources=[], services=[service],
+        include_details=True, include_cost_indicators=True,
+        operation_guard=OperationGuard(scoped_authorization=authorization),
+    )
+
+    assert len(result["resources"]) == 1
+    assert result["coverage"]["enrichment_pending_operations"]
+    getattr(client, enrichment_method).assert_not_called()
+
+
+def test_adapter_modules_do_not_own_consent_state() -> None:
+    adapter_root = Path(adapter_engine.__file__).parent / "adapters"
+    for path in adapter_root.glob("*.py"):
+        source = path.read_text(encoding="utf-8")
+        assert "aws_resource_mcp.aws.consent" not in source
+        assert "CONSENT_STORE" not in source
+
+
+def test_timeout_identifies_unfinished_services_without_calling_boto3() -> None:
+    client = Mock()
+    session = Mock()
+    session.client.return_value = client
+
+    result = adapter_engine.execute_adapters(
+        session, account_id="account", regions=["eu-west-1"],
+        primary_region="eu-west-1", discovered_resources=[],
+        services=["lambda"], include_details=True,
+        include_cost_indicators=True, operation_guard=OperationGuard(deadline=0),
+    )
+
+    assert result["coverage"]["timed_out"] == ["lambda"]
+    assert result["errors"][0]["error_type"] == "inventory_timeout"
+    client.list_functions.assert_not_called()
 
 
 def test_regional_failure_keeps_successful_region_results(
