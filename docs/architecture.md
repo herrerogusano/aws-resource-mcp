@@ -1,6 +1,6 @@
 # Arquitectura
 
-## Estado en la Fase 7
+## Estado en la Fase 7.5
 
 El proyecto es un servidor MCP local escrito en Python. Un cliente MCP lo inicia como proceso local y se comunica con él mediante transporte `stdio`.
 
@@ -39,11 +39,11 @@ STS identifica la cuenta efectiva antes de consultar recursos. Los errores de se
 
 El motor de diagnóstico no llama al motor de inventario. Inspecciona las declaraciones del mismo registro de adaptadores, prueba únicamente STS, regiones, metadatos de Resource Explorer y una muestra gratuita de CloudTrail, y conserva CloudWatch bloqueado. Esto separa “servidor operativo” de “cobertura AWS disponible”.
 
-`listar_recursos_aws` valida región, servicios, tipos y texto; transforma errores internos en respuestas seguras y genera un resumen con diagnóstico de cobertura. El diagnóstico Python directo continúa disponible.
+`listar_recursos_aws` valida región, servicios, tipos y texto; transforma errores internos en respuestas seguras y genera un resumen con diagnóstico de cobertura. Cuando hay operaciones medibles pendientes, crea una solicitud efímera en memoria. Una segunda llamada aprueba un subconjunto o cancela sin invocar inventario.
 
 ## Pipeline uniforme
 
-Resource Explorer encuentra recursos generales y obtiene dinámicamente los tipos soportados. El motor ejecuta después todos los adaptadores seleccionados, combina descubrimiento complementario y enriquecimiento, y aplica una sola deduplicación.
+El motor ejecuta primero los adaptadores permitidos, con servicios globales antes que regionales, para conservar resultados aunque Resource Explorer agote el presupuesto. Después consulta Resource Explorer, combina las fuentes y aplica una sola deduplicación.
 
 Todos los servicios siguen el mismo recorrido y comparten el mismo esquema. La deduplicación usa ARN, después tipo + región + identificador y, por último, servicio + región + nombre.
 
@@ -63,7 +63,9 @@ El modelo raíz es idéntico para todos. Las diferencias válidas se limitan a `
 
 ## Guard de operaciones
 
-`OperationGuard` consulta el registro central antes de cada llamada SDK. `free` se permite; `potentially_billable` requiere el modo de confirmación y confirmación explícita; `unknown` y `write` se bloquean. El modo predeterminado es `free-only`.
+`OperationGuard` consulta el registro central antes de cada llamada SDK. `free` se permite; `unknown` y `write` se bloquean. `potentially_billable` solo se permite con un `ScopedOperationAuthorization` exacto. Este limita operación, región, peticiones y páginas, registra cada petición y no cambia `free-only`.
+
+`InventoryConsentStore` vive únicamente en el proceso MCP. Sus registros expiran, son de un solo uso y guardan hashes de identidad y scope. El inventario provisional se normaliza, anonimiza y limpia de campos sensibles.
 
 ## Pipeline de actividad
 

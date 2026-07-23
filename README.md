@@ -4,7 +4,7 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La Fase 7 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad y diagnóstico explícito de salud y cobertura.
+La fase correctiva 7.5 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad, diagnóstico explícito y finalización del inventario mediante consentimiento puntual.
 
 ## Alcance previsto
 
@@ -95,8 +95,10 @@ Consulta el inventario AWS disponible para las credenciales locales sin modifica
 - `all_regions`: utiliza las regiones habilitadas cuando no se especifica `region`.
 - `include_details`: incluye metadatos específicos dentro de `details`.
 - `include_cost_indicators`: incluye señales potenciales de coste sin afirmar gasto real.
-- `confirm_potentially_billable_operations`: confirma operaciones potencialmente facturables; solo tiene efecto junto a `AWS_MCP_COST_MODE=allow-paid-with-confirmation`.
+- `confirm_potentially_billable_operations`: parámetro heredado que ya no concede permisos.
 - `include_activity_summary`: añade un resumen breve usando solo campos ya obtenidos; no consulta CloudTrail ni CloudWatch.
+- `consent_request_id`, `consent_action` y `approved_services`: reanudan o cancelan una solicitud efímera y acotada.
+- `timeout_seconds`: presupuesto configurable entre 1 y 120 segundos.
 
 Ejemplo de argumentos enviados por un cliente MCP:
 
@@ -109,7 +111,19 @@ Ejemplo de argumentos enviados por un cliente MCP:
 }
 ```
 
-Una respuesta `ok` cubre los tipos soportados por un índice agregador accesible; `partial` conserva resultados cuando faltan regiones, índices, vistas o permisos; `error` representa un problema global o parámetros inválidos. `coverage` explica qué pudo consultarse.
+La primera llamada devuelve los recursos obtenidos mediante operaciones permitidas. Si para completar S3, SQS o SNS hacen falta operaciones contabilizables, devuelve `partial_pending_consent`, `pending_operations` y una solicitud que expira en cinco minutos. No ejecuta esas operaciones hasta una segunda llamada explícita:
+
+```json
+{
+  "consent_request_id": "<id devuelto por la primera llamada>",
+  "consent_action": "approve",
+  "approved_services": ["s3"]
+}
+```
+
+La aprobación es de un solo uso, queda ligada a la identidad y al alcance originales, y limita operaciones, regiones y peticiones. Descubrimiento y enriquecimiento se autorizan por separado; una página adicional necesita una nueva solicitud. `consent_action: "cancel"` no ejecuta inventario AWS.
+
+Los estados distinguen `complete_for_requested_scope`, `partial_pending_consent`, `partial_timeout`, `partial_permission_denied`, `partial_unavailable`, `consent_cancelled` y `error`. Una lista vacía solo significa que el servicio está vacío cuando fue consultado.
 
 `resources`, `all_resources` y `resources_by_service` representan el mismo inventario deduplicado. Cada recurso contiene `id`, `arn`, `name`, `service`, `resource_type`, `region`, `account_id`, `state`, `created_at`, `sources`, `details`, `cost_indicators` y `activity`. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura.
 
@@ -159,7 +173,7 @@ Los resultados se deduplican por ARN o, si falta, por tipo, región e identifica
 
 La ausencia de credenciales o la imposibilidad de identificar la cuenta es un error global para inventario, pero solo un estado `degraded` para la salud local. El diagnóstico conserva sus comprobaciones locales y omite de forma segura las dependientes de AWS.
 
-Todas las llamadas Boto3 pasan primero por un registro central. Las operaciones no registradas, de escritura o de coste desconocido se bloquean. El modo predeterminado `AWS_MCP_COST_MODE=free-only` bloquea también operaciones potencialmente facturables. S3, SQS y SNS pertenecen a esta categoría porque AWS puede contabilizar sus peticiones; sus recursos todavía pueden aparecer mediante Resource Explorer.
+Todas las llamadas Boto3 pasan primero por un registro central. Las operaciones no registradas, de escritura o de coste desconocido se bloquean. El modo `free-only` permanece activo durante todo el proceso. S3, SQS y SNS pueden contabilizar peticiones: sus enumeraciones se presentan como pendientes y solo un grant efímero exacto permite ejecutarlas. El guard cuenta por separado operaciones únicas y peticiones reales.
 
 Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista las instancias EC2 de eu-west-1”, “Busca recursos llamados web” o “Muéstrame los tipos RDS desplegados”. Resource Explorer ofrece cobertura amplia, no universal.
 
@@ -173,3 +187,4 @@ Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista 
 - [Adaptadores de servicios](docs/service-adapters.md)
 - [Análisis de actividad](docs/activity-analysis.md)
 - [Diagnóstico y cobertura](docs/diagnostics-and-coverage.md)
+- [Flujo de consentimiento del inventario](docs/inventory-consent-flow.md)

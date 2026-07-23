@@ -209,3 +209,33 @@
 **Decisión:** exponer únicamente disponibilidad, cuenta enmascarada y tipo general de principal.
 
 **Motivo:** ARN, user ID, sesión, perfil y credenciales no son necesarios para explicar salud o cobertura.
+
+## D-036 — Consentimiento efímero en la misma tool
+
+**Decisión:** conservar la firma existente de `listar_recursos_aws` y añadir `consent_request_id`, `consent_action` y `approved_services`. El parámetro heredado de confirmación no concede permisos.
+
+**Motivo:** mantiene compatibilidad y convierte la aprobación en un segundo paso explícito y cancelable.
+
+## D-037 — Descubrimiento y enriquecimiento separados
+
+**Decisión:** cada adaptador declara operaciones de descubrimiento, enriquecimiento y paginación. Aprobar `ListBuckets`, `ListQueues` o `ListTopics` no autoriza consultas de configuración.
+
+**Motivo:** aplica mínimo privilegio a la unidad real de trabajo y evita multiplicar peticiones.
+
+## D-038 — Grant exacto sin cambiar `free-only`
+
+**Decisión:** mantener `free-only` y permitir una operación contabilizable únicamente mediante un grant en memoria ligado a identidad, scope, operación, región, límite, expiración y uso único.
+
+**Motivo:** un modo global o persistente podría afectar llamadas posteriores no relacionadas.
+
+## D-039 — Dos contadores económicos
+
+**Decisión:** informar tanto de operaciones potencialmente facturables distintas como de peticiones SDK realmente ejecutadas.
+
+**Motivo:** una operación puede repetirse por región o recurso y paginar.
+
+## D-040 — Estado provisional mínimo
+
+**Decisión:** guardar durante cinco minutos únicamente recursos normalizados y anonimizados, scope, operaciones pendientes y tokens. No se conservan respuestas Boto3 crudas ni identidad legible.
+
+**Motivo:** permite reanudar sin repetir trabajo y reduce exposición de datos.

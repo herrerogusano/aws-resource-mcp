@@ -2,9 +2,17 @@
 
 ## Estado actual
 
-Fase 7 implementada: diagnóstico explícito de salud local y cobertura AWS con política zero-cost.
+Fase correctiva 7.5 implementada: inventario parcial inmediato y finalización mediante consentimiento puntual sin abandonar `free-only`.
 
 ## Incluido
+
+- Estados explícitos para inventario completo, consentimiento pendiente, timeout, permisos denegados y fuentes no disponibles.
+- Solicitudes en memoria con expiración de cinco minutos, identidad y scope vinculados, cancelación y uso único.
+- Separación genérica de descubrimiento, enriquecimiento y paginación en el contrato común.
+- Autorización central exacta por operación y región, con límites de peticiones.
+- S3 `ListBuckets`, SQS `ListQueues` y SNS `ListTopics` como enumeraciones pendientes; los detalles requieren otra aprobación.
+- Recuento separado de operaciones potencialmente facturables únicas y peticiones ejecutadas.
+- Inventario provisional normalizado y anonimizado; no se conservan respuestas Boto3 crudas.
 
 - `health_check(check_aws=True)` compatible con llamada sin argumentos y STS opcional.
 - Estados de salud `ok`, `degraded` y `error`; credenciales ausentes no derriban el servidor.
@@ -41,7 +49,9 @@ uv run pytest -q
 uv run python -m compileall -q src
 ```
 
-Los tests unitarios no se conectan a AWS y cubren también salud sin AWS, STS, credenciales ausentes, anonimización, configuración inválida, regiones habilitadas y omitidas, Resource Explorer agregado/local/no configurado/denegado, adaptadores, actividad, filtros, serialización y registro MCP.
+206 tests pasan. No se conectan a AWS y cubren también salud, STS, anonimización, Resource Explorer, adaptadores, actividad, consentimiento, expiración, uso único, identidad, scope, límites, paginación, timeout, deduplicación, filtros, serialización y registro MCP.
+
+Un cliente MCP nuevo por `stdio` confirmó los tres campos de consentimiento en el esquema. La primera llamada real, limitada a una región y anonimizada, conservó 18 recursos de cuatro servicios y devolvió S3, SQS y SNS como pendientes. Cada enumeración indicó un máximo de una petición; se ejecutaron 0 operaciones potencialmente facturables y 0 peticiones de ese tipo. No se realizó la segunda llamada.
 
 La comprobación manual anonimizada del 2026-07-23 obtuvo `ok` tanto localmente como mediante STS, 18 regiones habilitadas y 13 adaptadores registrados. En la muestra acotada a `eu-west-1`, Resource Explorer fue `partial` porque solo se detectaron índices locales, CloudTrail estuvo disponible y CloudWatch bloqueado. Se contaron 654 tipos soportados dinámicamente. Un cliente MCP real por `stdio` descubrió las cuatro tools y ejecutó `health_check` y `diagnosticar_cobertura_aws`.
 
@@ -53,6 +63,7 @@ No se guardaron identificadores, nombres de recursos, identidad AWS, IPs, access
 
 ## Pendiente
 
+- Prueba real limitada de la segunda llamada, después de mostrar y recibir aprobación explícita para su alcance.
 - Fase 8: tool `revisar_free_tier` sin Cost Explorer.
 - Política IAM mínima formal, CI e integración final con cliente MCP en fases posteriores.
 - Una futura mejora con métricas funcionales requerirá consentimiento efímero limitado por operación, recursos, periodo y número de consultas.

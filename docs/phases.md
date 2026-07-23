@@ -32,6 +32,10 @@ Completada. Analiza señales gratuitas mediante el contrato común de adaptadore
 
 Implementada. Separa salud local y cobertura AWS, amplía `health_check` con STS opcional y añade `diagnosticar_cobertura_aws` para regiones, Resource Explorer, adaptadores, permisos, actividad y política zero-cost.
 
+## Fase 7.5 — Finalización del inventario con consentimiento
+
+Implementada. Devuelve primero el inventario gratuito y representa S3, SQS y SNS como pendientes cuando su enumeración puede contabilizar peticiones. Una segunda llamada puede conceder una autorización efímera, exacta, limitada y de un solo uso. Descubrimiento, enriquecimiento y paginación se autorizan por separado.
+
 ## Fase 8 — Tool `revisar_free_tier`
 
 Implementar `revisar_free_tier()` sin usar Cost Explorer.

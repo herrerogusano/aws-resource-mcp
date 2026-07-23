@@ -6,21 +6,21 @@
 AWS_MCP_COST_MODE=free-only
 ```
 
-Solo existen dos modos:
+La configuración conserva dos valores por compatibilidad:
 
 - `free-only`: permite operaciones registradas como gratuitas.
-- `allow-paid-with-confirmation`: permite operaciones potencialmente facturables únicamente cuando la petición incluye confirmación explícita.
+- `allow-paid-with-confirmation`: valor heredado; ya no concede por sí mismo operaciones potencialmente facturables.
 
 No existe un modo de ejecución facturable sin confirmación.
 
 ## Clasificaciones
 
 - `free`: permitida.
-- `potentially_billable`: bloqueada salvo modo y confirmación explícitos.
+- `potentially_billable`: bloqueada salvo autorización efímera exacta.
 - `unknown`: bloqueada.
 - `write`: bloqueada siempre.
 
-El guard se ejecuta antes de cada llamada Boto3. Una operación bloqueada devuelve `cost_permission_required`, la operación y `executed=false`; el método del cliente no se ejecuta.
+El guard se ejecuta antes de cada llamada Boto3. Una operación bloqueada devuelve `cost_permission_required`, la operación y `executed=false`; el método del cliente no se ejecuta. El antiguo booleano de confirmación no abre el guard.
 
 S3 cobra peticiones GET, LIST y otras peticiones; SQS contabiliza cada acción; SNS contabiliza operaciones de propietario y suscripción. Por eso sus operaciones directas se clasifican como potencialmente facturables. Resource Explorer está disponible sin coste adicional para búsquedas básicas, aunque AWS advierte que llamadas a otros servicios pueden generar cargos.
 
@@ -40,7 +40,13 @@ No se usan Metrics Insights, Logs Insights, métricas personalizadas, CloudTrail
 
 El diagnóstico no ejecuta adaptadores de inventario para probar permisos. Informa por separado de que una operación está registrada y permitida por la política, pero su permiso IAM queda `not_checked`. Las operaciones S3, SQS, SNS y CloudWatch continúan bloqueadas cuando corresponda. El contador `billable_operations_executed` es cero por defecto y en la comprobación manual.
 
-Antes del cierre se revisará la política excesivamente conservadora de inventario de bajo volumen para S3, SQS y SNS, sin incluir listado de objetos, métricas ni consultas intensivas.
+## Inventario con consentimiento
+
+`ListBuckets`, `ListQueues` y `ListTopics` permanecen clasificadas como `potentially_billable`. La primera llamada no las ejecuta: devuelve propósito, regiones, máximo estimado de peticiones, expiración y `executed=false`.
+
+Una aprobación crea un grant de una sola ejecución. No autoriza automáticamente detalles, otras regiones ni páginas adicionales. Si AWS devuelve un token, el resultado se marca truncado y una continuación exige consentimiento nuevo. Se cuentan tanto las operaciones únicas como las peticiones SDK reales.
+
+La política no garantiza coste cero: garantiza que las operaciones medibles no se ejecutan sin consentimiento explícito y acotado. Nunca se listan objetos, reciben mensajes ni publican contenidos.
 
 Referencias oficiales:
 

@@ -60,7 +60,9 @@ Un agregador ausente se explica como opción que requeriría escritura; la tool 
 
 Todos los servicios, incluidos Lambda y S3, se inspeccionan desde el mismo registro. Una operación puede estar registrada y permitida por `free-only` sin que el diagnóstico afirme haber demostrado su permiso IAM. Para probar todos los permisos habría que ejecutar inventarios, algo deliberadamente excluido.
 
-S3, SQS y SNS pueden aparecer bloqueados por la política económica actual. Esto describe cobertura desconocida o limitada, no ausencia de recursos. La revisión de consultas de inventario de bajo volumen queda como criterio de cierre.
+S3, SQS y SNS aparecen como `operation_pending_consent` cuando su enumeración directa no se ha autorizado. Cada adaptador incluye `inventory_status`, `required_operation` y `executed=false`. Esto describe cobertura pendiente, no ausencia de recursos.
+
+`health_check` declara `inventory_consent_flow` y el número de solicitudes vivas, pero nunca las ejecuta. El diagnóstico tampoco consume ni crea consentimiento.
 
 ## Fuentes de actividad
 
