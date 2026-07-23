@@ -1,6 +1,8 @@
 """Central allowlist and zero-cost guard for every Boto3 operation."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from time import monotonic
 from typing import Any, Literal
 
 from aws_resource_mcp.config import DEFAULT_COST_MODE, VALID_COST_MODES
@@ -22,9 +24,7 @@ def _free(service: str, operation: str, method: str) -> OperationSpec:
     return OperationSpec(service, operation, method, "read", "free", True)
 
 
-def _potentially_billable(
-    service: str, operation: str, method: str
-) -> OperationSpec:
+def _potentially_billable(service: str, operation: str, method: str) -> OperationSpec:
     return OperationSpec(
         service, operation, method, "read", "potentially_billable", False
     )
@@ -35,7 +35,11 @@ _FREE_OPERATIONS = (
     ("ec2", "DescribeRegions", "describe_regions"),
     ("resource-explorer-2", "ListIndexes", "list_indexes"),
     ("resource-explorer-2", "ListViews", "list_views"),
-    ("resource-explorer-2", "ListSupportedResourceTypes", "list_supported_resource_types"),
+    (
+        "resource-explorer-2",
+        "ListSupportedResourceTypes",
+        "list_supported_resource_types",
+    ),
     ("resource-explorer-2", "Search", "search"),
     ("lambda", "ListFunctions", "list_functions"),
     ("ec2", "DescribeInstances", "describe_instances"),
@@ -117,6 +121,87 @@ class OperationBlockedError(RuntimeError):
         }
 
 
+class OperationLimitError(OperationBlockedError):
+    """A scoped grant reached its request or pagination limit."""
+
+    def __init__(self, service: str, operation: str, reason: str) -> None:
+        super().__init__(service, operation, reason)
+        self.error["error_type"] = "operation_truncated"
+
+
+class OperationTimeoutError(OperationBlockedError):
+    """The bounded inventory deadline was reached between AWS calls."""
+
+    def __init__(self, service: str, operation: str) -> None:
+        super().__init__(
+            service,
+            operation,
+            "The inventory time budget was exhausted before this operation.",
+        )
+        self.error["error_type"] = "inventory_timeout"
+
+
+@dataclass
+class ScopedOperationAuthorization:
+    """Single-execution authorization for exact read operations and Regions."""
+
+    allowed_operations: frozenset[tuple[str, str]]
+    allowed_regions: frozenset[str]
+    max_requests: int
+    max_additional_pages: int = 0
+    requests_executed: int = 0
+    pagination_requests_executed: int = 0
+    operations_executed: set[tuple[str, str]] = field(default_factory=set)
+    audit_events: list[dict[str, Any]] = field(default_factory=list)
+
+    def permits(self, service: str, operation: str, region: str) -> bool:
+        region_allowed = region == "global" or region in self.allowed_regions
+        return (service, operation) in self.allowed_operations and region_allowed
+
+    def consume(
+        self,
+        service: str,
+        operation: str,
+        region: str,
+        *,
+        pagination: bool,
+    ) -> None:
+        if not self.permits(service, operation, region):
+            raise OperationBlockedError(
+                service,
+                operation,
+                "The operation is outside the approved single-use scope.",
+            )
+        if self.requests_executed >= self.max_requests:
+            raise OperationLimitError(
+                service,
+                operation,
+                "The approved request limit has been reached.",
+            )
+        if pagination and (
+            self.pagination_requests_executed >= self.max_additional_pages
+        ):
+            raise OperationLimitError(
+                service,
+                operation,
+                "Additional pagination was not approved.",
+            )
+        self.requests_executed += 1
+        if pagination:
+            self.pagination_requests_executed += 1
+        self.operations_executed.add((service, operation))
+        self.audit_events.append(
+            {
+                "service": service,
+                "operation": operation,
+                "region": region,
+                "pagination": pagination,
+                "request_number": self.requests_executed,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
+
+
 class OperationGuard:
     """Enforce the central operation policy before each SDK call."""
 
@@ -125,35 +210,75 @@ class OperationGuard:
         cost_mode: str = DEFAULT_COST_MODE,
         *,
         paid_operations_confirmed: bool = False,
+        scoped_authorization: ScopedOperationAuthorization | None = None,
+        deadline: float | None = None,
     ) -> None:
         if cost_mode not in VALID_COST_MODES:
             raise ValueError(f"Unsupported cost mode: {cost_mode}")
         self.cost_mode = cost_mode
         self.paid_operations_confirmed = paid_operations_confirmed
+        self.scoped_authorization = scoped_authorization
+        self.deadline = deadline
 
-    def require_allowed(self, *, service: str, operation: str) -> OperationSpec:
+    def require_allowed(
+        self,
+        *,
+        service: str,
+        operation: str,
+        region: str = "global",
+    ) -> OperationSpec:
         spec = OPERATION_REGISTRY.get((service, operation))
         if spec is None:
             raise OperationBlockedError(
                 service, operation, "The operation is not registered and is blocked."
             )
         if spec.access == "write" or spec.cost_classification == "write":
-            raise OperationBlockedError(service, operation, "Write operations are always blocked.")
+            raise OperationBlockedError(
+                service, operation, "Write operations are always blocked."
+            )
         if spec.cost_classification == "unknown":
-            raise OperationBlockedError(service, operation, "Unknown-cost operations are blocked.")
-        if spec.cost_classification == "potentially_billable" and not (
-            self.cost_mode == "allow-paid-with-confirmation"
-            and self.paid_operations_confirmed
-        ):
+            raise OperationBlockedError(
+                service, operation, "Unknown-cost operations are blocked."
+            )
+        scoped = bool(
+            self.scoped_authorization
+            and self.scoped_authorization.permits(service, operation, region)
+        )
+        if spec.cost_classification == "potentially_billable" and not scoped:
             raise OperationBlockedError(
                 service,
                 operation,
                 "The operation may be billable and requires explicit confirmation.",
             )
-        if self.cost_mode == "free-only" and not spec.enabled_in_free_only:
-            raise OperationBlockedError(service, operation, "The operation is disabled in free-only mode.")
+        if (
+            self.cost_mode == "free-only"
+            and not spec.enabled_in_free_only
+            and not scoped
+        ):
+            raise OperationBlockedError(
+                service, operation, "The operation is disabled in free-only mode."
+            )
         return spec
 
-    def call(self, client: Any, *, service: str, operation: str, **parameters: Any) -> Any:
-        spec = self.require_allowed(service=service, operation=operation)
+    def call(
+        self,
+        client: Any,
+        *,
+        service: str,
+        operation: str,
+        region: str = "global",
+        pagination: bool = False,
+        **parameters: Any,
+    ) -> Any:
+        if self.deadline is not None and monotonic() >= self.deadline:
+            raise OperationTimeoutError(service, operation)
+        spec = self.require_allowed(service=service, operation=operation, region=region)
+        if (
+            spec.cost_classification == "potentially_billable"
+            and self.scoped_authorization is not None
+            and self.scoped_authorization.permits(service, operation, region)
+        ):
+            self.scoped_authorization.consume(
+                service, operation, region, pagination=pagination
+            )
         return getattr(client, spec.method)(**parameters)

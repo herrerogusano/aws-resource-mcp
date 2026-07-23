@@ -3,21 +3,34 @@
 import argparse
 import json
 from collections.abc import Collection
+from time import monotonic
 from typing import Any
 
 from aws_resource_mcp.aws.adapter_engine import execute_adapters
+from aws_resource_mcp.aws.consent import (
+    ConsentRecord,
+    ConsentValidationError,
+    identity_fingerprint,
+)
+from aws_resource_mcp.aws.discovery import (
+    deduplicate_resources,
+    group_resources_by_service,
+)
 from aws_resource_mcp.aws.errors import (
     AWSInventoryGlobalError,
     describe_aws_error,
 )
 from aws_resource_mcp.aws.identity import get_aws_identity
-from aws_resource_mcp.aws.discovery import group_resources_by_service
 from aws_resource_mcp.aws.regions import enabled_region_names, list_aws_regions
 from aws_resource_mcp.aws.resource_explorer_inventory import (
     discover_with_resource_explorer,
 )
 from aws_resource_mcp.aws.session import create_aws_session
-from aws_resource_mcp.aws.operations import OperationGuard
+from aws_resource_mcp.aws.operations import (
+    OperationGuard,
+    OperationTimeoutError,
+    ScopedOperationAuthorization,
+)
 from aws_resource_mcp.config import AWSConfig, DEFAULT_AWS_REGION
 from aws_resource_mcp.models import InventoryError
 
@@ -29,6 +42,7 @@ def _matches_resource_type(resource: dict[str, Any], allowed: set[str]) -> bool:
         _, service, kind = resource_type.split("::", 2)
         candidates.add(f"{service}:{kind}".lower())
     return bool(candidates & allowed)
+
 
 def collect_general_aws_inventory(
     region: str | None = None,
@@ -44,6 +58,7 @@ def collect_general_aws_inventory(
     cost_mode: str | None = None,
     confirm_potentially_billable_operations: bool = False,
     include_global_resource_explorer_results: bool = False,
+    timeout_seconds: float = 30.0,
 ) -> dict[str, Any]:
     """Run general discovery and every selected adapter through one pipeline."""
     primary_region = region or DEFAULT_AWS_REGION
@@ -52,10 +67,9 @@ def collect_general_aws_inventory(
         profile_name=profile_name,
         cost_mode=cost_mode,
     )
-    operation_guard = OperationGuard(
-        config.cost_mode,
-        paid_operations_confirmed=confirm_potentially_billable_operations,
-    )
+    del confirm_potentially_billable_operations
+    deadline = monotonic() + timeout_seconds
+    operation_guard = OperationGuard(config.cost_mode, deadline=deadline)
     try:
         aws_session = session or create_aws_session(config.region, config.profile_name)
         account = get_aws_identity(aws_session, operation_guard)
@@ -65,9 +79,7 @@ def collect_general_aws_inventory(
     errors: list[InventoryError] = []
     coverage_limitations: list[str] = []
     try:
-        region_records = list_aws_regions(
-            aws_session, primary_region, operation_guard
-        )
+        region_records = list_aws_regions(aws_session, primary_region, operation_guard)
         enabled_regions = enabled_region_names(region_records)
     except Exception as error:
         errors.append(describe_aws_error("ec2", error))
@@ -77,53 +89,65 @@ def collect_general_aws_inventory(
         )
 
     scan_regions = (
-        enabled_regions
-        if all_regions and region is None
-        else [primary_region]
+        enabled_regions if all_regions and region is None else [primary_region]
     )
-    requested_services = (
-        None if services is None else sorted(set(services))
-    )
-    requested_types = (
-        None if resource_types is None else sorted(set(resource_types))
-    )
-
-    explorer = discover_with_resource_explorer(
-        aws_session,
-        enabled_regions,
-        primary_region=primary_region,
-        services=requested_services,
-        resource_types=requested_types,
-        query=query,
-        region_filter=(
-            None
-            if include_global_resource_explorer_results
-            else region
-            if region is not None
-            else (None if all_regions else primary_region)
-        ),
-        operation_guard=operation_guard,
-    )
-    errors.extend(explorer["errors"])
-    explorer_coverage = explorer["coverage"]
-    explorer_coverage["limitations"] = [
-        *coverage_limitations,
-        *explorer_coverage["limitations"],
-    ]
+    requested_services = None if services is None else sorted(set(services))
+    requested_types = None if resource_types is None else sorted(set(resource_types))
 
     adapter_result = execute_adapters(
         aws_session,
         account_id=account.get("account_id"),
         regions=scan_regions,
         primary_region=primary_region,
-        discovered_resources=explorer["resources"],
+        discovered_resources=[],
         services=requested_services,
         include_details=include_details,
         include_cost_indicators=include_cost_indicators,
         operation_guard=operation_guard,
     )
     errors.extend(adapter_result["errors"])
-    resources = adapter_result["resources"]
+    try:
+        explorer = discover_with_resource_explorer(
+            aws_session,
+            enabled_regions,
+            primary_region=primary_region,
+            services=requested_services,
+            resource_types=requested_types,
+            query=query,
+            region_filter=(
+                None
+                if include_global_resource_explorer_results
+                else region
+                if region is not None
+                else (None if all_regions else primary_region)
+            ),
+            operation_guard=operation_guard,
+        )
+    except OperationTimeoutError:
+        explorer = {
+            "resources": [],
+            "coverage": {
+                "available": False,
+                "aggregator_index": False,
+                "regions_indexed": [],
+                "supported_resource_type_count": 0,
+                "services_recognized": [],
+                "permission_errors": [],
+                "limitations": [
+                    "Resource Explorer was skipped because the inventory time budget expired."
+                ],
+            },
+            "errors": [],
+        }
+    errors.extend(explorer["errors"])
+    explorer_coverage = explorer["coverage"]
+    explorer_coverage["limitations"] = [
+        *coverage_limitations,
+        *explorer_coverage["limitations"],
+    ]
+    resources = deduplicate_resources(
+        explorer["resources"], adapter_result["resources"]
+    )
     if resource_types is not None:
         allowed_types = {item.lower() for item in resource_types}
         resources = [
@@ -177,9 +201,128 @@ def collect_general_aws_inventory(
             "regions_scanned": scan_regions,
             "adapters": adapter_coverage,
             "cost_mode": config.cost_mode,
+            "timeout_seconds": timeout_seconds,
         },
         "errors": errors,
     }
+
+
+def complete_inventory_with_consent(
+    record: ConsentRecord,
+    approved_services: Collection[str],
+    *,
+    session: Any | None = None,
+    timeout_seconds: float = 30.0,
+) -> tuple[dict[str, Any], ScopedOperationAuthorization]:
+    """Resume only approved pending adapters under a single-use request budget."""
+    scope = record.scope
+    primary_region = str(scope["primary_region"])
+    config = AWSConfig.from_sources(region=primary_region)
+    deadline = monotonic() + timeout_seconds
+    identity_guard = OperationGuard(config.cost_mode, deadline=deadline)
+    aws_session = session or create_aws_session(config.region, config.profile_name)
+    identity = get_aws_identity(aws_session, identity_guard)
+    if identity_fingerprint(identity) != record.identity_hash:
+        raise ConsentValidationError(
+            "consent_identity_mismatch",
+            "The current AWS identity does not match the consent request.",
+        )
+
+    selected_pending = [
+        item
+        for item in record.pending_operations
+        if item["adapter"] in set(approved_services)
+    ]
+    allowed_operations = frozenset(
+        (item["service"], item["operation"]) for item in selected_pending
+    )
+    allowed_regions = frozenset(
+        {region for item in selected_pending for region in item.get("regions", [])}
+    )
+    authorization = ScopedOperationAuthorization(
+        allowed_operations=allowed_operations,
+        allowed_regions=allowed_regions,
+        max_requests=sum(item["estimated_max_requests"] for item in selected_pending),
+        max_additional_pages=0,
+    )
+    guard = OperationGuard(
+        config.cost_mode,
+        scoped_authorization=authorization,
+        deadline=deadline,
+    )
+    skip_discovery_services = {
+        adapter_name
+        for adapter_name in approved_services
+        if {
+            item["stage"]
+            for item in selected_pending
+            if item["adapter"] == adapter_name
+        }
+        == {"enrichment"}
+    }
+    provisional = record.provisional_inventory
+    adapter_result = execute_adapters(
+        aws_session,
+        account_id=identity.get("account_id"),
+        regions=list(scope["regions_scanned"]),
+        primary_region=primary_region,
+        discovered_resources=list(provisional.get("resources", [])),
+        services=approved_services,
+        include_details=bool(scope["include_details"]),
+        include_cost_indicators=bool(scope["include_cost_indicators"]),
+        operation_guard=guard,
+        resume_tokens=record.continuation_tokens,
+        skip_discovery_services=skip_discovery_services,
+    )
+    resources = deduplicate_resources(
+        list(provisional.get("resources", [])),
+        adapter_result["resources"],
+    )
+    if scope.get("include_account_id") and identity.get("account_id"):
+        for resource in resources:
+            resource["account_id"] = identity["account_id"]
+    resources_by_service = group_resources_by_service(resources)
+    coverage = dict(provisional.get("coverage", {}))
+    previous_adapters = coverage.get("adapters", {})
+    current_adapters = adapter_result["coverage"]
+    merged_adapters = dict(current_adapters)
+    for key in (
+        "registered",
+        "selected",
+        "executed",
+        "failed",
+        "permission_denied",
+        "timed_out",
+        "unavailable",
+    ):
+        merged_adapters[key] = list(
+            dict.fromkeys(
+                [
+                    *previous_adapters.get(key, []),
+                    *current_adapters.get(key, []),
+                ]
+            )
+        )
+    merged_adapters["operations_executed"] = [
+        *previous_adapters.get("operations_executed", []),
+        *current_adapters.get("operations_executed", []),
+    ]
+    coverage["adapters"] = merged_adapters
+    return (
+        {
+            "account": identity,
+            "region": primary_region,
+            "services": resources_by_service,
+            "resources": resources,
+            "resources_by_service": resources_by_service,
+            "coverage": coverage,
+            "errors": [
+                *list(provisional.get("errors", [])),
+                *adapter_result["errors"],
+            ],
+        },
+        authorization,
+    )
 
 
 def collect_aws_inventory(

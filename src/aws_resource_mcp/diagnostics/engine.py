@@ -73,7 +73,7 @@ def _operation_diagnostic(
         status = "not_checked" if not include_permissions else "operation_available"
     except OperationBlockedError:
         status = (
-            "operation_blocked_by_cost"
+            "operation_pending_consent"
             if spec.cost_classification == "potentially_billable"
             else "operation_not_registered"
         )
@@ -108,7 +108,7 @@ def _adapter_diagnostics(
         blocked = [
             item["operation"]
             for item in operations
-            if item["status"] == "operation_blocked_by_cost"
+            if item["status"] == "operation_pending_consent"
         ]
         unregistered = [
             item["operation"]
@@ -120,10 +120,20 @@ def _adapter_diagnostics(
             for item in operations
             if item["status"] in {"operation_available", "not_checked"}
         ]
+        discovery_names = {
+            f"{service}:{operation}"
+            for service, operation in metadata.discovery_operations
+        }
+        pending_discovery = [
+            item["operation"]
+            for item in operations
+            if item["status"] == "operation_pending_consent"
+            and item["operation"] in discovery_names
+        ]
         if unregistered:
             status = "error"
         elif blocked and len(blocked) == len(operations):
-            status = "blocked_by_cost_policy"
+            status = "pending_consent"
         elif blocked:
             status = "partial"
         else:
@@ -149,6 +159,19 @@ def _adapter_diagnostics(
                 "service": metadata.service_name,
                 "scope": metadata.scope,
                 "status": status,
+                "inventory_status": (
+                    "operation_pending_consent"
+                    if pending_discovery
+                    else "operation_available"
+                    if not unregistered
+                    else "operation_blocked"
+                ),
+                "required_operation": (
+                    pending_discovery[0].split(":", 1)[1]
+                    if len(pending_discovery) == 1
+                    else None
+                ),
+                "executed": False,
                 "capabilities": {
                     "discovery": metadata.supports_discovery,
                     "enrichment": metadata.supports_enrichment,

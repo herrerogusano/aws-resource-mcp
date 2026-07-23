@@ -4,6 +4,7 @@ from importlib.metadata import PackageNotFoundError, version
 from typing import Any
 
 from aws_resource_mcp.aws.adapters.registry import get_adapters, validate_registry
+from aws_resource_mcp.aws.consent import CONSENT_STORE
 from aws_resource_mcp.aws.errors import describe_aws_error
 from aws_resource_mcp.aws.identity import get_aws_identity
 from aws_resource_mcp.aws.operations import OperationGuard
@@ -38,7 +39,11 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
             },
             "aws": {"check_requested": False, "error": {"type": "invalid_input"}},
             "capabilities": {},
-            "safety": {"billable_operations_executed": 0},
+            "safety": {
+                "billable_operations_executed": 0,
+                "potentially_billable_operations_executed": 0,
+                "pending_consent_count": CONSENT_STORE.pending_count(),
+            },
         }
     try:
         config = AWSConfig.from_sources()
@@ -70,6 +75,8 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
             "safety": {
                 "cost_mode": "invalid",
                 "billable_operations_executed": 0,
+                "potentially_billable_operations_executed": 0,
+                "pending_consent_count": CONSENT_STORE.pending_count(),
                 "write_operations_enabled": False,
             },
         }
@@ -109,10 +116,13 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
             ],
             "registered_tool_count": len(tool_names),
             "registered_tools": tool_names,
+            "inventory_consent_flow": True,
         },
         "safety": {
             "cost_mode": config.cost_mode,
             "billable_operations_executed": 0,
+            "potentially_billable_operations_executed": 0,
+            "pending_consent_count": CONSENT_STORE.pending_count(),
             "write_operations_enabled": False,
         },
     }

@@ -106,6 +106,8 @@ def test_health_check_reports_dynamic_capabilities_and_zero_cost() -> None:
     assert result["safety"] == {
         "cost_mode": "free-only",
         "billable_operations_executed": 0,
+        "potentially_billable_operations_executed": 0,
+        "pending_consent_count": 0,
         "write_operations_enabled": False,
     }
 
