@@ -53,9 +53,11 @@ def test_consent_is_ephemeral_single_use_and_anonymized() -> None:
     assert "credentials" not in str(record.provisional_inventory)
     assert store.get(record.request_id, now=now) is record
 
-    store.consume(record.request_id)
+    store.consume(record.request_id, now=now)
     with pytest.raises(ConsentValidationError, match="already"):
         store.get(record.request_id, now=now)
+    with pytest.raises(ConsentValidationError, match="already"):
+        store.consume(record.request_id, now=now)
 
 
 def test_expired_and_cancelled_consent_cannot_be_used() -> None:
@@ -207,9 +209,7 @@ def test_completion_deduplicates_resources_and_preserves_previous_coverage(
         },
     }
 
-    inventory, _ = complete_inventory_with_consent(
-        record, ["s3"], session=Mock()
-    )
+    inventory, _ = complete_inventory_with_consent(record, ["s3"], session=Mock())
 
     assert {item["service"] for item in inventory["resources"]} == {"lambda", "s3"}
     assert inventory["coverage"]["adapters"]["executed"] == ["lambda", "s3"]

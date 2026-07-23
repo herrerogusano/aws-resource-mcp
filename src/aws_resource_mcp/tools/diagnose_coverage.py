@@ -18,6 +18,7 @@ def _invalid(message: str) -> dict[str, Any]:
         "discovery": {"status": "not_checked"},
         "enrichment": {"status": "not_checked"},
         "activity": {"status": "not_checked"},
+        "economics": {"status": "not_checked"},
         "permissions": {"status": "not_checked"},
         "cost_policy": {"billable_operations_executed": 0},
         "limitations": [],

@@ -406,6 +406,7 @@ def _cost_policy_diagnostic(config: AWSConfig) -> dict[str, Any]:
         "write_operations": counts["write"],
         "blocked_operation_count": blocked,
         "billable_operations_executed": 0,
+        "potentially_billable_requests_executed": 0,
         "write_operations_enabled": False,
     }
 
@@ -463,6 +464,25 @@ def collect_coverage_diagnostics(
         "discovery": {"status": "not_checked"},
         "enrichment": {"status": "not_checked"},
         "activity": {"status": "not_checked"},
+        "economics": {
+            "status": "available",
+            "risk_analysis": {"status": "available", "aws_call_executed": False},
+            "free_tier": {
+                "status": "available",
+                "operations": [
+                    "freetier:GetFreeTierUsage",
+                    "freetier:GetAccountPlanState",
+                ],
+                "cost_classification": "free",
+                "executed": False,
+            },
+            "cost_explorer": {
+                "status": "requires_explicit_consent",
+                "operation": "ce:GetCostAndUsage",
+                "cost_classification": "potentially_billable",
+                "executed": False,
+            },
+        },
         "permissions": {
             "status": "not_checked" if not include_permissions else "partial",
             "checks": [],

@@ -20,6 +20,12 @@ SENSITIVE_FIELD_NAMES = frozenset(
         "policydocument",
         "templatebody",
         "secretstring",
+        "billingviewarn",
+        "linkedaccount",
+        "linkedaccountname",
+        "payeraccount",
+        "paymentmethod",
+        "taxaddress",
     }
 )
 
@@ -44,12 +50,19 @@ class CostIndicator(TypedDict):
 
 
 ActivityStatus = Literal[
-    "active", "inactive_candidate", "unknown", "not_supported",
-    "blocked_by_cost_policy", "error",
+    "active",
+    "inactive_candidate",
+    "unknown",
+    "not_supported",
+    "blocked_by_cost_policy",
+    "error",
 ]
 ActivityType = Literal[
-    "functional_usage", "administrative_activity", "configuration_change",
-    "resource_state", "unknown",
+    "functional_usage",
+    "administrative_activity",
+    "configuration_change",
+    "resource_state",
+    "unknown",
 ]
 ActivityConfidence = Literal["high", "medium", "low", "unknown"]
 
