@@ -70,6 +70,16 @@ def validate_registry() -> None:
                 raise ValueError(
                     f"{adapter.metadata.service_name} declares unregistered operation {operation}"
                 )
+            spec = OPERATION_REGISTRY[operation]
+            expected_component = f"adapter:{adapter.metadata.service_name}"
+            if spec.component != expected_component:
+                raise ValueError(
+                    f"{operation} must use IAM component {expected_component}"
+                )
+            if not spec.iam_actions or spec.policy_target == "excluded":
+                raise ValueError(
+                    f"{operation} is not covered by a generated runtime policy"
+                )
 
 
 validate_registry()

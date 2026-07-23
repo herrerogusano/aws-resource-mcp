@@ -11,6 +11,7 @@ from aws_resource_mcp.aws.operations import OperationGuard
 from aws_resource_mcp.aws.session import create_aws_session
 from aws_resource_mcp.config import AWSConfig
 from aws_resource_mcp.diagnostics.identity import anonymous_identity
+from aws_resource_mcp.security.iam_policy_generator import iam_health_metadata
 from aws_resource_mcp.tools.registry import registered_tool_names
 
 
@@ -39,6 +40,17 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
             },
             "aws": {"check_requested": False, "error": {"type": "invalid_input"}},
             "capabilities": {},
+            "iam": {
+                "policy_manifest_loaded": False,
+                "generated_policies_current": False,
+                "free_only_policy_generated": False,
+                "consented_policy_generated": False,
+                "local_validation": "not_checked",
+                "policy_validation": "not_checked",
+                "runtime_identity_dedicated": "unknown",
+                "managed_policy_audit": "not_checked",
+                "remote_validation_executed": False,
+            },
             "safety": {
                 "billable_operations_executed": 0,
                 "potentially_billable_operations_executed": 0,
@@ -73,6 +85,7 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
                 },
             },
             "capabilities": {},
+            "iam": iam_health_metadata(),
             "safety": {
                 "cost_mode": "invalid",
                 "billable_operations_executed": 0,
@@ -130,6 +143,7 @@ def health_check(check_aws: bool = True) -> dict[str, Any]:
                 "automatic_execution": False,
             },
         },
+        "iam": iam_health_metadata(),
         "safety": {
             "cost_mode": config.cost_mode,
             "billable_operations_executed": 0,

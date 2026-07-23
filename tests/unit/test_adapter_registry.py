@@ -23,6 +23,11 @@ def test_every_service_is_in_one_registry_and_implements_contract() -> None:
         assert adapter.metadata.scope in {"regional", "global"}
         assert adapter.metadata.resource_types
         assert all(operation in OPERATION_REGISTRY for operation in adapter.metadata.operations)
+        for operation in adapter.metadata.operations:
+            spec = OPERATION_REGISTRY[operation]
+            assert spec.component == f"adapter:{name}"
+            assert spec.iam_actions
+            assert spec.policy_target != "excluded"
 
 
 def test_lambda_s3_and_other_services_use_identical_selection() -> None:
