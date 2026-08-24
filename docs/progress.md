@@ -2,6 +2,9 @@
 
 ## Estado actual
 
+Fase 13 en cierre: checklist de release y demo reproducible completan la
+primera versión junto con CI y la integración Codex.
+
 Fase 12 en preparación: GitHub Actions validará formato, lint, compilación,
 artefactos IAM y tests con dependencias bloqueadas, sin credenciales AWS.
 
