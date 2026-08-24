@@ -36,6 +36,13 @@ When a response is `partial_pending_consent`, Codex must explain the exact
 operation and wait for explicit approval; it never creates persistent consent.
 See [Codex integration](docs/codex-integration.md) and the [demo](docs/demo.md).
 
+## Release v0.1.0
+
+La primera versión está lista para revisión: incluye guard de solo lectura,
+consentimiento efímero, integración con Codex y CI. Consulta el
+[checklist de release](docs/release-checklist.md) para verificarla localmente
+y ejecutar la demo segura.
+
 ## Desarrollo
 
 El proyecto se gestiona con `uv` y Python 3.12 o posterior.
