@@ -1,7 +1,7 @@
 """Tests for exact, ephemeral Cost Explorer consent."""
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import Mock, patch
 
 import pytest
@@ -189,6 +189,6 @@ def test_forecast_and_resource_level_are_separate_and_not_silently_authorized() 
 
 
 def test_default_period_is_valid_on_first_day_of_month() -> None:
-    start, end = current_month_period(datetime(2026, 8, 1, 12, tzinfo=timezone.utc))
+    start, end = current_month_period(datetime(2026, 8, 1, 12, tzinfo=UTC))
 
     assert (start, end) == ("2026-07-01", "2026-08-01")

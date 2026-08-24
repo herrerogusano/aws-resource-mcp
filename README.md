@@ -15,6 +15,14 @@ La fase 9 está implementada. El servidor combina inventario uniforme, análisis
 - Cost Explorer está bloqueado hasta recibir consentimiento efímero para una petición exacta.
 - Sin despliegue en AWS ni CD.
 
+## Fiabilidad
+
+La fase 10 incorpora pruebas locales de integración, contrato, seguridad,
+rendimiento y protocolo MCP. El inventario aplica además
+`AWS_MCP_MAX_REQUESTS_PER_TOOL` (250 por defecto) antes de cada llamada SDK;
+cuando se agota conserva el resultado y devuelve
+`partial_request_budget_exhausted`.
+
 ## Desarrollo
 
 El proyecto se gestiona con `uv` y Python 3.12 o posterior.

@@ -15,7 +15,7 @@ from aws_resource_mcp.aws.discovery import (
 from aws_resource_mcp.aws.inventory import collect_general_aws_inventory
 from aws_resource_mcp.aws.operations import OperationBlockedError, OperationGuard
 from aws_resource_mcp.aws.session import create_aws_session
-from aws_resource_mcp.config import AWSConfig, DEFAULT_AWS_REGION
+from aws_resource_mcp.config import DEFAULT_AWS_REGION, AWSConfig
 from aws_resource_mcp.models import Resource
 
 DEFAULT_MAX_RESOURCES = 100
@@ -52,7 +52,7 @@ def _aliases(resource: Resource) -> set[str]:
 
 
 def _event_matches_resource(event: dict[str, Any], resource: Resource) -> bool:
-    event_ids = set(str(item) for item in event.get("resource_ids", []) if item)
+    event_ids = {str(item) for item in event.get("resource_ids", []) if item}
     if not event_ids:
         return False
     aliases = _aliases(resource)

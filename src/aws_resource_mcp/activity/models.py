@@ -52,7 +52,7 @@ def parse_timestamp(value: Any) -> datetime | None:
             return None
     elif isinstance(value, str):
         try:
-            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+            parsed = datetime.fromisoformat(value.strip())
         except ValueError:
             return None
     else:

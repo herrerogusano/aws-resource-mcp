@@ -227,8 +227,7 @@ def test_truncated_discovery_requires_new_page_before_enrichment(
     )
 
     assert [
-        (item["operation"], item["stage"])
-        for item in result["pending_operations"]
+        (item["operation"], item["stage"]) for item in result["pending_operations"]
     ] == [("ListBuckets", "discovery")]
     assert result["pending_operations"][0]["continuation"] is True
     assert result["consent_request"]["pagination_request_limit"] == 1

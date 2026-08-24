@@ -1,7 +1,7 @@
 """Explicit, single-use consent flow for potentially billable Cost Explorer."""
 
 from copy import deepcopy
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal, InvalidOperation
 from typing import Any
 
@@ -119,12 +119,12 @@ def _decimal(value: Any) -> Decimal:
     try:
         return Decimal(str(value or "0"))
     except InvalidOperation:
-        return Decimal("0")
+        return Decimal(0)
 
 
 def _normalize_cost_page(response: dict[str, Any]) -> dict[str, Any]:
     periods: list[dict[str, Any]] = []
-    grand_total = Decimal("0")
+    grand_total = Decimal(0)
     currency = "USD"
     for item in response.get("ResultsByTime", []):
         groups = []
@@ -152,7 +152,7 @@ def _normalize_cost_page(response: dict[str, Any]) -> dict[str, Any]:
                 "estimated": bool(item.get("Estimated")),
                 "services": groups,
                 "total": str(
-                    sum((_decimal(group["amount"]) for group in groups), Decimal("0"))
+                    sum((_decimal(group["amount"]) for group in groups), Decimal(0))
                     if groups
                     else _decimal(total_metric.get("Amount"))
                 ),
@@ -332,7 +332,7 @@ def validate_period(start_date: str, end_date: str) -> None:
 
 
 def current_month_period(now: datetime | None = None) -> tuple[str, str]:
-    current = (now or datetime.now(timezone.utc)).date()
+    current = (now or datetime.now(UTC)).date()
     if current.day == 1:
         previous_day = current - timedelta(days=1)
         return previous_day.replace(day=1).isoformat(), current.isoformat()

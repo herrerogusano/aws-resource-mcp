@@ -9,8 +9,19 @@ from aws_resource_mcp.models import make_resource
 from aws_resource_mcp.tools import list_resources
 
 EXPECTED_ADAPTERS = {
-    "lambda", "s3", "ec2", "rds", "dynamodb", "ecs", "apigateway",
-    "cloudformation", "sqs", "sns", "iam", "cloudfront", "route53",
+    "lambda",
+    "s3",
+    "ec2",
+    "rds",
+    "dynamodb",
+    "ecs",
+    "apigateway",
+    "cloudformation",
+    "sqs",
+    "sns",
+    "iam",
+    "cloudfront",
+    "route53",
 }
 
 
@@ -22,7 +33,9 @@ def test_every_service_is_in_one_registry_and_implements_contract() -> None:
         assert adapter.metadata.service_name == name
         assert adapter.metadata.scope in {"regional", "global"}
         assert adapter.metadata.resource_types
-        assert all(operation in OPERATION_REGISTRY for operation in adapter.metadata.operations)
+        assert all(
+            operation in OPERATION_REGISTRY for operation in adapter.metadata.operations
+        )
         for operation in adapter.metadata.operations:
             spec = OPERATION_REGISTRY[operation]
             assert spec.component == f"adapter:{name}"
@@ -31,7 +44,9 @@ def test_every_service_is_in_one_registry_and_implements_contract() -> None:
 
 
 def test_lambda_s3_and_other_services_use_identical_selection() -> None:
-    assert [item.metadata.service_name for item in get_adapters(["lambda"])] == ["lambda"]
+    assert [item.metadata.service_name for item in get_adapters(["lambda"])] == [
+        "lambda"
+    ]
     assert [item.metadata.service_name for item in get_adapters(["ec2"])] == ["ec2"]
     assert [item.metadata.service_name for item in get_adapters(["s3"])] == ["s3"]
     assert [item.metadata.service_name for item in get_adapters(["rds"])] == ["rds"]
@@ -54,7 +69,17 @@ def test_common_model_has_no_service_specific_root_fields() -> None:
         )
     )
     assert roots == {
-        "id", "arn", "name", "service", "resource_type", "region",
-        "account_id", "state", "created_at", "sources", "details",
-        "cost_indicators", "activity",
+        "id",
+        "arn",
+        "name",
+        "service",
+        "resource_type",
+        "region",
+        "account_id",
+        "state",
+        "created_at",
+        "sources",
+        "details",
+        "cost_indicators",
+        "activity",
     }

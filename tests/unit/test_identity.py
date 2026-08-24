@@ -2,8 +2,8 @@
 
 from unittest.mock import Mock
 
-from botocore.exceptions import ClientError, NoCredentialsError
 import pytest
+from botocore.exceptions import ClientError, NoCredentialsError
 
 from aws_resource_mcp.aws.identity import get_aws_identity
 

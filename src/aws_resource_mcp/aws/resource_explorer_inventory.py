@@ -1,6 +1,6 @@
 """General AWS resource discovery through read-only Resource Explorer APIs."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from aws_resource_mcp.aws.errors import describe_aws_error
@@ -23,9 +23,7 @@ def _paginated_call(
         if next_token:
             request["NextToken"] = next_token
         guard = operation_guard or OperationGuard()
-        response = guard.call(
-            client, service=service, operation=operation, **request
-        )
+        response = guard.call(client, service=service, operation=operation, **request)
         results.extend(response.get(result_key, []))
         next_token = response.get("NextToken")
         if not next_token:
@@ -191,7 +189,7 @@ def discover_with_resource_explorer(
         "regions_indexed": [],
         "supported_resource_type_count": 0,
         "services_recognized": [],
-        "executed_at": datetime.now(timezone.utc).isoformat(),
+        "executed_at": datetime.now(UTC).isoformat(),
         "permission_errors": [],
         "limitations": [],
     }

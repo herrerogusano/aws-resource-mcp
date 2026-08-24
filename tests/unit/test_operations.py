@@ -9,6 +9,7 @@ from aws_resource_mcp.aws.operations import (
     OperationBlockedError,
     OperationGuard,
     OperationSpec,
+    RequestBudgetExceededError,
     ScopedOperationAuthorization,
 )
 
@@ -20,6 +21,19 @@ def test_registered_free_operation_executes_through_guard() -> None:
     result = OperationGuard().call(client, service="lambda", operation="ListFunctions")
 
     assert result == {"Functions": []}
+    client.list_functions.assert_called_once_with()
+
+
+def test_tool_wide_request_budget_blocks_before_the_next_sdk_call() -> None:
+    client = Mock()
+    client.list_functions.return_value = {"Functions": []}
+    guard = OperationGuard(max_requests=1)
+
+    guard.call(client, service="lambda", operation="ListFunctions")
+    with pytest.raises(RequestBudgetExceededError):
+        guard.call(client, service="lambda", operation="ListFunctions")
+
+    assert guard.sdk_requests_executed == 1
     client.list_functions.assert_called_once_with()
 
 
