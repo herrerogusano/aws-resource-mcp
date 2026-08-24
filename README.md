@@ -23,6 +23,10 @@ rendimiento y protocolo MCP. El inventario aplica además
 cuando se agota conserva el resultado y devuelve
 `partial_request_budget_exhausted`.
 
+La integración continua ejecuta en cada pull request el formato, lint,
+compilación, validación determinista de IAM y tests locales. No configura
+credenciales AWS ni ejecuta operaciones AWS.
+
 ## Using with Codex
 
 Codex is the primary client. Use the package entry point `uv run aws-resource-mcp`
