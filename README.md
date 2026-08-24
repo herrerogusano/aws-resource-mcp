@@ -23,6 +23,15 @@ rendimiento y protocolo MCP. El inventario aplica además
 cuando se agota conserva el resultado y devuelve
 `partial_request_budget_exhausted`.
 
+## Using with Codex
+
+Codex is the primary client. Use the package entry point `uv run aws-resource-mcp`
+over `stdio`, configure any AWS profile outside the repository, and begin with
+natural-language questions such as “What resources do I have in eu-west-1?”.
+When a response is `partial_pending_consent`, Codex must explain the exact
+operation and wait for explicit approval; it never creates persistent consent.
+See [Codex integration](docs/codex-integration.md) and the [demo](docs/demo.md).
+
 ## Desarrollo
 
 El proyecto se gestiona con `uv` y Python 3.12 o posterior.
