@@ -65,7 +65,7 @@ def default_iam_dir() -> Path:
 
 
 def _all_actions(spec: OperationSpec) -> tuple[str, ...]:
-    return tuple(sorted(set((*spec.iam_actions, *spec.dependent_actions))))
+    return tuple(sorted({*spec.iam_actions, *spec.dependent_actions}))
 
 
 def validate_registry_metadata(
@@ -129,11 +129,7 @@ def _selected_specs(
         else {"free-only", "consented-readonly"}
     )
     return sorted(
-        (
-            spec
-            for spec in registry.values()
-            if spec.policy_target in allowed_targets
-        ),
+        (spec for spec in registry.values() if spec.policy_target in allowed_targets),
         key=lambda spec: (
             spec.capability,
             spec.service,
@@ -179,14 +175,11 @@ def build_policy(
             "Resource": "*" if resource == "all" else resource,
         }
         if allowed_regions and all(
-            spec.scope == "regional"
-            and "aws:RequestedRegion" in spec.condition_keys
+            spec.scope == "regional" and "aws:RequestedRegion" in spec.condition_keys
             for spec in specs
         ):
             statement["Condition"] = {
-                "StringEquals": {
-                    "aws:RequestedRegion": sorted(set(allowed_regions))
-                }
+                "StringEquals": {"aws:RequestedRegion": sorted(set(allowed_regions))}
             }
         statements.append(statement)
     return {"Version": POLICY_VERSION, "Statement": statements}
@@ -221,11 +214,7 @@ def build_permissions_manifest(
     capabilities: list[dict[str, Any]] = []
     for capability in sorted({spec.capability for spec in registry.values()}):
         specs = sorted(
-            (
-                spec
-                for spec in registry.values()
-                if spec.capability == capability
-            ),
+            (spec for spec in registry.values() if spec.capability == capability),
             key=lambda spec: (spec.service, spec.operation),
         )
         capabilities.append(
@@ -233,21 +222,15 @@ def build_permissions_manifest(
                 "capability": capability,
                 "tools": sorted({tool for spec in specs for tool in spec.tools}),
                 "components": sorted({spec.component for spec in specs}),
-                "operations": [
-                    f"{spec.service}:{spec.operation}" for spec in specs
-                ],
+                "operations": [f"{spec.service}:{spec.operation}" for spec in specs],
                 "iam_actions": sorted(
                     {action for spec in specs for action in _all_actions(spec)}
                 ),
-                "policy_targets": sorted(
-                    {spec.policy_target for spec in specs}
-                ),
+                "policy_targets": sorted({spec.policy_target for spec in specs}),
                 "cost_classifications": sorted(
                     {spec.cost_classification for spec in specs}
                 ),
-                "consent_required": any(
-                    spec.consent_required for spec in specs
-                ),
+                "consent_required": any(spec.consent_required for spec in specs),
                 "sensitive_data_risks": sorted(
                     {spec.sensitive_data_risk for spec in specs}
                 ),
@@ -283,9 +266,7 @@ def build_artifacts(
     allowed_regions: Sequence[str] | None = None,
 ) -> dict[str, dict[str, Any]]:
     """Build every checked-in artifact in memory."""
-    free = build_policy(
-        "free-only", registry=registry, allowed_regions=allowed_regions
-    )
+    free = build_policy("free-only", registry=registry, allowed_regions=allowed_regions)
     consented = build_policy(
         "consented-readonly", registry=registry, allowed_regions=allowed_regions
     )
@@ -350,7 +331,9 @@ def check_artifacts_current(output_dir: Path | None = None) -> list[str]:
     stale: list[str] = []
     for name, artifact in expected.items():
         path = destination / name
-        if not path.exists() or path.read_text(encoding="utf-8") != _json_text(artifact):
+        if not path.exists() or path.read_text(encoding="utf-8") != _json_text(
+            artifact
+        ):
             stale.append(name)
     return stale
 
@@ -375,9 +358,7 @@ def iam_health_metadata() -> dict[str, Any]:
     return {
         "policy_manifest_loaded": True,
         "generated_policies_current": not stale,
-        "free_only_policy_generated": (
-            POLICY_FILENAMES["free-only"] not in stale
-        ),
+        "free_only_policy_generated": (POLICY_FILENAMES["free-only"] not in stale),
         "consented_policy_generated": (
             POLICY_FILENAMES["consented-readonly"] not in stale
         ),

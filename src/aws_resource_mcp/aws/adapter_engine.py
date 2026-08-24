@@ -13,6 +13,7 @@ from aws_resource_mcp.aws.operations import (
     OperationBlockedError,
     OperationGuard,
     OperationTimeoutError,
+    RequestBudgetExceededError,
 )
 from aws_resource_mcp.models import InventoryError, Resource
 
@@ -55,6 +56,7 @@ def execute_adapters(
     permission_denied: list[str] = []
     timed_out: list[str] = []
     unavailable: list[str] = []
+    request_budget_exhausted: list[str] = []
     skip_discovery = set(skip_discovery_services or ())
 
     def pending_for(
@@ -173,6 +175,13 @@ def execute_adapters(
                     item.metadata.service_name for item in selected[adapter_index:]
                 )
                 break
+            except RequestBudgetExceededError as error:
+                adapter_failed = True
+                errors.append(error.error)
+                request_budget_exhausted.extend(
+                    item.metadata.service_name for item in selected[adapter_index:]
+                )
+                break
             except OperationBlockedError as error:
                 adapter_failed = True
                 errors.append(error.error)
@@ -189,7 +198,7 @@ def execute_adapters(
             executed.append(name)
         if adapter_failed:
             failed.append(name)
-        if timed_out:
+        if timed_out or request_budget_exhausted:
             break
 
     def aggregate_pending(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -226,10 +235,12 @@ def execute_adapters(
             "enrichment_pending_operations": enrichment_pending_operations,
             "permission_denied": sorted(set(permission_denied)),
             "timed_out": list(dict.fromkeys(timed_out)),
+            "request_budget_exhausted": list(dict.fromkeys(request_budget_exhausted)),
             "unavailable": sorted(set(unavailable)),
             "truncated": bool(context.truncations),
             "truncations": context.truncations,
             "continuation_tokens": context.continuation_tokens,
             "operations_executed": context.operations_executed,
+            "sdk_requests_executed": operation_guard.sdk_requests_executed,
         },
     }

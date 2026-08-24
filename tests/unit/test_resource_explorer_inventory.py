@@ -1,6 +1,6 @@
 """Tests for read-only Resource Explorer discovery."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import Mock
 
 from botocore.exceptions import ClientError, EndpointConnectionError
@@ -34,16 +34,10 @@ def test_indexes_and_supported_types_are_paginated() -> None:
 
     client.list_supported_resource_types.side_effect = [
         {
-            "ResourceTypes": [
-                {"Service": "ec2", "ResourceType": "ec2:instance"}
-            ],
+            "ResourceTypes": [{"Service": "ec2", "ResourceType": "ec2:instance"}],
             "NextToken": "types-next",
         },
-        {
-            "ResourceTypes": [
-                {"Service": "s3", "ResourceType": "s3:bucket"}
-            ]
-        },
+        {"ResourceTypes": [{"Service": "s3", "ResourceType": "s3:bucket"}]},
     ]
     types = list_supported_resource_types(client)
     assert [item["resource_type"] for item in types] == [
@@ -64,7 +58,7 @@ def test_search_is_paginated_and_properties_are_variable() -> None:
                     "CfnResourceType": "AWS::EC2::Instance",
                     "Region": "eu-west-1",
                     "OwningAccountId": "111122223333",
-                    "LastReportedAt": datetime(2026, 7, 1, tzinfo=timezone.utc),
+                    "LastReportedAt": datetime(2026, 7, 1, tzinfo=UTC),
                     "Properties": [
                         {"Name": "Name", "Data": "web"},
                         {"Name": "State", "Data": {"Value": "running"}},

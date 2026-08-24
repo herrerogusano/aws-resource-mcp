@@ -1,7 +1,7 @@
 """Central allowlist and zero-cost guard for every Boto3 operation."""
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from time import monotonic
 from typing import Any, Literal
 
@@ -14,9 +14,7 @@ SensitiveDataRisk = Literal["low", "medium", "high"]
 PolicyTarget = Literal["free-only", "consented-readonly", "excluded"]
 
 IAM_VERIFIED_AT = "2026-07-23"
-SERVICE_REFERENCE_ROOT = (
-    "https://servicereference.us-east-1.amazonaws.com/v1"
-)
+SERVICE_REFERENCE_ROOT = "https://servicereference.us-east-1.amazonaws.com/v1"
 
 
 @dataclass(frozen=True)
@@ -53,10 +51,7 @@ def _reference_url(service: str) -> str:
         "apigatewayv2": "apigateway",
         "accessanalyzer": "access-analyzer",
     }.get(service, service)
-    return (
-        f"{SERVICE_REFERENCE_ROOT}/{reference_service}/"
-        f"{reference_service}.json"
-    )
+    return f"{SERVICE_REFERENCE_ROOT}/{reference_service}/{reference_service}.json"
 
 
 def _spec(
@@ -84,9 +79,7 @@ def _spec(
     ),
     exclusion_reason: str | None = None,
 ) -> OperationSpec:
-    target = policy_target or (
-        "free-only" if cost == "free" else "consented-readonly"
-    )
+    target = policy_target or ("free-only" if cost == "free" else "consented-readonly")
     return OperationSpec(
         service=service,
         operation=operation,
@@ -368,9 +361,7 @@ _OPERATION_SPECS = (
         scope="global",
         stage="free_tier",
         sensitive_data_risk="medium",
-        alternative_actions={
-            "GetFreeTierUsage": ("aws-portal:ViewBilling",)
-        },
+        alternative_actions={"GetFreeTierUsage": ("aws-portal:ViewBilling",)},
         wildcard_justification=(
             "Free Tier is an account-level API and does not support resource ARNs."
         ),
@@ -425,9 +416,7 @@ _OPERATION_SPECS = (
         stage="enrichment",
         cost="potentially_billable",
         action_overrides={
-            "GetBucketLifecycleConfiguration": (
-                "s3:GetLifecycleConfiguration",
-            ),
+            "GetBucketLifecycleConfiguration": ("s3:GetLifecycleConfiguration",),
             "GetBucketReplication": ("s3:GetReplicationConfiguration",),
             "GetBucketEncryption": ("s3:GetEncryptionConfiguration",),
             "GetPublicAccessBlock": ("s3:GetBucketPublicAccessBlock",),
@@ -496,8 +485,7 @@ _OPERATION_SPECS = (
         condition_keys=("aws:RequestedRegion",),
         policy_target="excluded",
         exclusion_reason=(
-            "CloudWatch enrichment is not executable through the current "
-            "consent flow."
+            "CloudWatch enrichment is not executable through the current consent flow."
         ),
     ),
     _spec(
@@ -579,9 +567,7 @@ _OPERATION_SPECS = (
     ),
 )
 
-OPERATION_REGISTRY = {
-    (spec.service, spec.operation): spec for spec in _OPERATION_SPECS
-}
+OPERATION_REGISTRY = {(spec.service, spec.operation): spec for spec in _OPERATION_SPECS}
 
 
 class OperationBlockedError(RuntimeError):
@@ -616,6 +602,18 @@ class OperationTimeoutError(OperationBlockedError):
             "The inventory time budget was exhausted before this operation.",
         )
         self.error["error_type"] = "inventory_timeout"
+
+
+class RequestBudgetExceededError(OperationBlockedError):
+    """The tool-wide AWS SDK request budget was reached before a call."""
+
+    def __init__(self, service: str, operation: str) -> None:
+        super().__init__(
+            service,
+            operation,
+            "The tool-wide AWS SDK request budget was exhausted before this operation.",
+        )
+        self.error["error_type"] = "request_budget_exhausted"
 
 
 @dataclass
@@ -674,7 +672,7 @@ class ScopedOperationAuthorization:
                 "region": region,
                 "pagination": pagination,
                 "request_number": self.requests_executed,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -689,6 +687,7 @@ class OperationGuard:
         paid_operations_confirmed: bool = False,
         scoped_authorization: ScopedOperationAuthorization | None = None,
         deadline: float | None = None,
+        max_requests: int | None = None,
     ) -> None:
         if cost_mode not in VALID_COST_MODES:
             raise ValueError(f"Unsupported cost mode: {cost_mode}")
@@ -696,6 +695,8 @@ class OperationGuard:
         self.paid_operations_confirmed = paid_operations_confirmed
         self.scoped_authorization = scoped_authorization
         self.deadline = deadline
+        self.max_requests = max_requests
+        self.sdk_requests_executed = 0
 
     def require_allowed(
         self,
@@ -749,6 +750,11 @@ class OperationGuard:
     ) -> Any:
         if self.deadline is not None and monotonic() >= self.deadline:
             raise OperationTimeoutError(service, operation)
+        if (
+            self.max_requests is not None
+            and self.sdk_requests_executed >= self.max_requests
+        ):
+            raise RequestBudgetExceededError(service, operation)
         spec = self.require_allowed(service=service, operation=operation, region=region)
         if (
             spec.cost_classification == "potentially_billable"
@@ -758,4 +764,5 @@ class OperationGuard:
             self.scoped_authorization.consume(
                 service, operation, region, pagination=pagination
             )
+        self.sdk_requests_executed += 1
         return getattr(client, spec.method)(**parameters)

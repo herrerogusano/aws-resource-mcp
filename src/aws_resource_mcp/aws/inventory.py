@@ -21,17 +21,17 @@ from aws_resource_mcp.aws.errors import (
     describe_aws_error,
 )
 from aws_resource_mcp.aws.identity import get_aws_identity
-from aws_resource_mcp.aws.regions import enabled_region_names, list_aws_regions
-from aws_resource_mcp.aws.resource_explorer_inventory import (
-    discover_with_resource_explorer,
-)
-from aws_resource_mcp.aws.session import create_aws_session
 from aws_resource_mcp.aws.operations import (
     OperationGuard,
     OperationTimeoutError,
     ScopedOperationAuthorization,
 )
-from aws_resource_mcp.config import AWSConfig, DEFAULT_AWS_REGION
+from aws_resource_mcp.aws.regions import enabled_region_names, list_aws_regions
+from aws_resource_mcp.aws.resource_explorer_inventory import (
+    discover_with_resource_explorer,
+)
+from aws_resource_mcp.aws.session import create_aws_session
+from aws_resource_mcp.config import DEFAULT_AWS_REGION, AWSConfig
 from aws_resource_mcp.models import InventoryError
 
 
@@ -69,7 +69,11 @@ def collect_general_aws_inventory(
     )
     del confirm_potentially_billable_operations
     deadline = monotonic() + timeout_seconds
-    operation_guard = OperationGuard(config.cost_mode, deadline=deadline)
+    operation_guard = OperationGuard(
+        config.cost_mode,
+        deadline=deadline,
+        max_requests=config.max_requests_per_tool,
+    )
     try:
         aws_session = session or create_aws_session(config.region, config.profile_name)
         account = get_aws_identity(aws_session, operation_guard)
@@ -202,6 +206,7 @@ def collect_general_aws_inventory(
             "adapters": adapter_coverage,
             "cost_mode": config.cost_mode,
             "timeout_seconds": timeout_seconds,
+            "max_requests_per_tool": config.max_requests_per_tool,
         },
         "errors": errors,
     }
@@ -219,7 +224,11 @@ def complete_inventory_with_consent(
     primary_region = str(scope["primary_region"])
     config = AWSConfig.from_sources(region=primary_region)
     deadline = monotonic() + timeout_seconds
-    identity_guard = OperationGuard(config.cost_mode, deadline=deadline)
+    identity_guard = OperationGuard(
+        config.cost_mode,
+        deadline=deadline,
+        max_requests=config.max_requests_per_tool,
+    )
     aws_session = session or create_aws_session(config.region, config.profile_name)
     identity = get_aws_identity(aws_session, identity_guard)
     if identity_fingerprint(identity) != record.identity_hash:
@@ -249,6 +258,9 @@ def complete_inventory_with_consent(
         config.cost_mode,
         scoped_authorization=authorization,
         deadline=deadline,
+        max_requests=(
+            config.max_requests_per_tool - identity_guard.sdk_requests_executed
+        ),
     )
     skip_discovery_services = {
         adapter_name
@@ -285,6 +297,10 @@ def complete_inventory_with_consent(
     coverage = dict(provisional.get("coverage", {}))
     previous_adapters = coverage.get("adapters", {})
     current_adapters = adapter_result["coverage"]
+    current_adapters["sdk_requests_executed"] = (
+        current_adapters.get("sdk_requests_executed", 0)
+        + identity_guard.sdk_requests_executed
+    )
     merged_adapters = dict(current_adapters)
     for key in (
         "registered",

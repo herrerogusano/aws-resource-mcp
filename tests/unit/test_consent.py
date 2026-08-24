@@ -1,6 +1,6 @@
 """Tests for ephemeral, identity-bound inventory consent."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from unittest.mock import Mock, patch
 
 import pytest
@@ -10,8 +10,8 @@ from aws_resource_mcp.aws.consent import (
     InventoryConsentStore,
     identity_fingerprint,
 )
-from aws_resource_mcp.aws.operations import ScopedOperationAuthorization
 from aws_resource_mcp.aws.inventory import complete_inventory_with_consent
+from aws_resource_mcp.aws.operations import ScopedOperationAuthorization
 
 
 def _record(store: InventoryConsentStore, now: datetime):
@@ -44,7 +44,7 @@ def _record(store: InventoryConsentStore, now: datetime):
 
 
 def test_consent_is_ephemeral_single_use_and_anonymized() -> None:
-    now = datetime(2026, 7, 23, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 23, tzinfo=UTC)
     store = InventoryConsentStore(ttl_seconds=60)
     record = _record(store, now)
 
@@ -61,14 +61,14 @@ def test_consent_is_ephemeral_single_use_and_anonymized() -> None:
 
 
 def test_expired_and_cancelled_consent_cannot_be_used() -> None:
-    now = datetime(2026, 7, 23, tzinfo=timezone.utc)
+    now = datetime(2026, 7, 23, tzinfo=UTC)
     store = InventoryConsentStore(ttl_seconds=10)
     expired = _record(store, now)
     with pytest.raises(ConsentValidationError) as error:
         store.get(expired.request_id, now=now + timedelta(seconds=10))
     assert error.value.code == "consent_expired"
 
-    active_now = datetime.now(timezone.utc)
+    active_now = datetime.now(UTC)
     active = _record(store, active_now)
     store.cancel(active.request_id)
     with pytest.raises(ConsentValidationError) as error:
@@ -77,7 +77,7 @@ def test_expired_and_cancelled_consent_cannot_be_used() -> None:
 
 
 def test_audit_uses_anonymized_id_and_bounded_operation_metadata() -> None:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     store = InventoryConsentStore()
     record = _record(store, now)
     authorization = ScopedOperationAuthorization(

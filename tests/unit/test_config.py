@@ -2,7 +2,7 @@
 
 import pytest
 
-from aws_resource_mcp.config import AWSConfig, DEFAULT_AWS_REGION
+from aws_resource_mcp.config import DEFAULT_AWS_REGION, AWSConfig
 
 
 def test_default_region() -> None:
@@ -34,8 +34,22 @@ def test_cost_mode_defaults_to_free_only() -> None:
 
 
 def test_cost_mode_can_require_confirmation_but_rejects_unsafe_values() -> None:
-    assert AWSConfig.from_sources(
-        environ={"AWS_MCP_COST_MODE": "allow-paid-with-confirmation"}
-    ).cost_mode == "allow-paid-with-confirmation"
+    assert (
+        AWSConfig.from_sources(
+            environ={"AWS_MCP_COST_MODE": "allow-paid-with-confirmation"}
+        ).cost_mode
+        == "allow-paid-with-confirmation"
+    )
     with pytest.raises(ValueError):
         AWSConfig.from_sources(environ={"AWS_MCP_COST_MODE": "allow-all"})
+
+
+def test_request_budget_is_bounded_and_configurable() -> None:
+    assert (
+        AWSConfig.from_sources(
+            environ={"AWS_MCP_MAX_REQUESTS_PER_TOOL": "7"}
+        ).max_requests_per_tool
+        == 7
+    )
+    with pytest.raises(ValueError):
+        AWSConfig.from_sources(environ={"AWS_MCP_MAX_REQUESTS_PER_TOOL": "0"})

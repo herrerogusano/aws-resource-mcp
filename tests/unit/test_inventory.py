@@ -3,8 +3,8 @@
 import json
 from unittest.mock import Mock, patch
 
-from botocore.exceptions import ClientError
 import pytest
+from botocore.exceptions import ClientError
 
 from aws_resource_mcp.aws.errors import AWSInventoryGlobalError
 from aws_resource_mcp.aws.inventory import (
@@ -57,7 +57,11 @@ def test_diagnostic_command_returns_nonzero_for_global_error(
     collect: Mock, capsys: pytest.CaptureFixture[str]
 ) -> None:
     collect.side_effect = AWSInventoryGlobalError(
-        {"service": "sts", "error_type": "profile_not_found", "message": "Check profile."}
+        {
+            "service": "sts",
+            "error_type": "profile_not_found",
+            "message": "Check profile.",
+        }
     )
     assert main(["--profile", "missing"]) == 1
     assert json.loads(capsys.readouterr().out)["error"]["service"] == "sts"
@@ -165,7 +169,10 @@ def test_general_inventory_filters_service_and_region(
         "resources": [],
         "errors": [],
         "coverage": {
-            "registered": [], "selected": [], "executed": [], "failed": [],
+            "registered": [],
+            "selected": [],
+            "executed": [],
+            "failed": [],
             "operations_executed": [],
         },
     }
@@ -212,7 +219,10 @@ def test_general_inventory_region_failure_reports_unavailable_coverage(
         "resources": [],
         "errors": [],
         "coverage": {
-            "registered": [], "selected": [], "executed": [], "failed": [],
+            "registered": [],
+            "selected": [],
+            "executed": [],
+            "failed": [],
             "operations_executed": [],
         },
     }
@@ -239,16 +249,23 @@ def test_uniform_adapter_fallback_makes_unavailable_general_discovery_partial(
     explorer.return_value = {
         "resources": [],
         "coverage": {
-            "available": False, "aggregator_index": False, "regions_indexed": [],
-            "permission_errors": [], "limitations": ["not configured"],
+            "available": False,
+            "aggregator_index": False,
+            "regions_indexed": [],
+            "permission_errors": [],
+            "limitations": ["not configured"],
         },
         "errors": [],
     }
     adapters.return_value = {
-        "resources": [], "errors": [],
+        "resources": [],
+        "errors": [],
         "coverage": {
-            "registered": ["lambda", "ec2"], "selected": ["lambda", "ec2"],
-            "executed": ["lambda", "ec2"], "failed": [], "operations_executed": [],
+            "registered": ["lambda", "ec2"],
+            "selected": ["lambda", "ec2"],
+            "executed": ["lambda", "ec2"],
+            "failed": [],
+            "operations_executed": [],
         },
     }
 
@@ -256,4 +273,6 @@ def test_uniform_adapter_fallback_makes_unavailable_general_discovery_partial(
 
     assert result["coverage"]["status"] == "partial"
     assert result["coverage"]["adapters"]["executed"] == ["lambda", "ec2"]
-    assert "uniform fallback" in result["coverage"]["resource_explorer"]["limitations"][-1]
+    assert (
+        "uniform fallback" in result["coverage"]["resource_explorer"]["limitations"][-1]
+    )

@@ -30,7 +30,9 @@ class FakeAdapter:
         return resources
 
 
-def _adapter(name: str, resource: Resource | None = None, *, fail: bool = False) -> FakeAdapter:
+def _adapter(
+    name: str, resource: Resource | None = None, *, fail: bool = False
+) -> FakeAdapter:
     return FakeAdapter(
         AdapterMetadata(
             service_name=name,
@@ -54,16 +56,18 @@ def _install(
 def test_uniform_fallback_executes_every_registered_adapter(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    adapters = {
-        name: _adapter(name)
-        for name in ("lambda", "s3", "ec2", "rds")
-    }
+    adapters = {name: _adapter(name) for name in ("lambda", "s3", "ec2", "rds")}
     _install(monkeypatch, adapters)
 
     result = adapter_engine.execute_adapters(
-        Mock(), account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=None,
-        include_details=True, include_cost_indicators=True,
+        Mock(),
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=None,
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(),
     )
 
@@ -79,9 +83,14 @@ def test_service_filters_follow_the_same_registry_path(
     adapters = {name: _adapter(name) for name in ("lambda", "s3", "ec2", "rds")}
     _install(monkeypatch, adapters)
     result = adapter_engine.execute_adapters(
-        Mock(), account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=[service],
-        include_details=True, include_cost_indicators=True,
+        Mock(),
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=[service],
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(),
     )
     assert result["coverage"]["selected"] == [service]
@@ -93,21 +102,34 @@ def test_adapter_details_merge_with_general_discovery_without_empty_overwrite(
 ) -> None:
     arn = "arn:aws:example:eu-west-1:account:resource/id"
     general = make_resource(
-        service="example", resource_type="AWS::Example::Resource",
-        region="eu-west-1", source="resource_explorer", identifier="id",
-        arn=arn, details={"general": True, "keep": "value"},
+        service="example",
+        resource_type="AWS::Example::Resource",
+        region="eu-west-1",
+        source="resource_explorer",
+        identifier="id",
+        arn=arn,
+        details={"general": True, "keep": "value"},
     )
     detailed = make_resource(
-        service="example", resource_type="AWS::Example::Resource",
-        region="eu-west-1", source="example_api", identifier="id", arn=arn,
+        service="example",
+        resource_type="AWS::Example::Resource",
+        region="eu-west-1",
+        source="example_api",
+        identifier="id",
+        arn=arn,
         details={"specific": True, "keep": None},
     )
     _install(monkeypatch, {"example": _adapter("example", detailed)})
 
     result = adapter_engine.execute_adapters(
-        Mock(), account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[general], services=None,
-        include_details=True, include_cost_indicators=True,
+        Mock(),
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[general],
+        services=None,
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(),
     )
 
@@ -121,18 +143,29 @@ def test_one_adapter_failure_preserves_other_results(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     visible = make_resource(
-        service="visible", resource_type="AWS::visible::Resource",
-        region="eu-west-1", source="visible_api", identifier="id",
+        service="visible",
+        resource_type="AWS::visible::Resource",
+        region="eu-west-1",
+        source="visible_api",
+        identifier="id",
     )
-    _install(monkeypatch, {
-        "failed": _adapter("failed", fail=True),
-        "visible": _adapter("visible", visible),
-    })
+    _install(
+        monkeypatch,
+        {
+            "failed": _adapter("failed", fail=True),
+            "visible": _adapter("visible", visible),
+        },
+    )
 
     result = adapter_engine.execute_adapters(
-        Mock(), account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=None,
-        include_details=True, include_cost_indicators=True,
+        Mock(),
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=None,
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(),
     )
 
@@ -149,9 +182,14 @@ def test_real_lambda_adapter_executes_free_operation_through_guard() -> None:
     session.client.return_value = client
 
     result = adapter_engine.execute_adapters(
-        session, account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=["lambda"],
-        include_details=True, include_cost_indicators=True,
+        session,
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=["lambda"],
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(),
     )
 
@@ -173,9 +211,14 @@ def test_metered_adapter_operations_are_blocked_before_boto3(
     session.client.return_value = client
 
     result = adapter_engine.execute_adapters(
-        session, account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=[service],
-        include_details=True, include_cost_indicators=True,
+        session,
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=[service],
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(),
     )
 
@@ -188,11 +231,13 @@ def test_metered_adapter_operations_are_blocked_before_boto3(
 def test_scoped_s3_discovery_is_minimal_and_truncates_before_second_page() -> None:
     client = Mock()
     client.list_buckets.return_value = {
-        "Buckets": [{
-            "Name": "example",
-            "BucketArn": "arn:aws:s3:::example",
-            "BucketRegion": "eu-west-1",
-        }],
+        "Buckets": [
+            {
+                "Name": "example",
+                "BucketArn": "arn:aws:s3:::example",
+                "BucketRegion": "eu-west-1",
+            }
+        ],
         "ContinuationToken": "next",
     }
     session = Mock()
@@ -205,9 +250,14 @@ def test_scoped_s3_discovery_is_minimal_and_truncates_before_second_page() -> No
     )
 
     result = adapter_engine.execute_adapters(
-        session, account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=["s3"],
-        include_details=True, include_cost_indicators=True,
+        session,
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=["s3"],
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(scoped_authorization=authorization),
     )
 
@@ -224,12 +274,16 @@ def test_scoped_s3_discovery_is_minimal_and_truncates_before_second_page() -> No
     ("service", "operation", "method", "response", "enrichment_method"),
     [
         (
-            "sqs", "ListQueues", "list_queues",
+            "sqs",
+            "ListQueues",
+            "list_queues",
             {"QueueUrls": ["https://sqs.eu-west-1.amazonaws.com/account/queue"]},
             "get_queue_attributes",
         ),
         (
-            "sns", "ListTopics", "list_topics",
+            "sns",
+            "ListTopics",
+            "list_topics",
             {"Topics": [{"TopicArn": "arn:aws:sns:eu-west-1:account:topic"}]},
             "list_subscriptions_by_topic",
         ),
@@ -253,9 +307,14 @@ def test_scoped_regional_discovery_does_not_authorize_enrichment(
     )
 
     result = adapter_engine.execute_adapters(
-        session, account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=[service],
-        include_details=True, include_cost_indicators=True,
+        session,
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=[service],
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(scoped_authorization=authorization),
     )
 
@@ -278,15 +337,44 @@ def test_timeout_identifies_unfinished_services_without_calling_boto3() -> None:
     session.client.return_value = client
 
     result = adapter_engine.execute_adapters(
-        session, account_id="account", regions=["eu-west-1"],
-        primary_region="eu-west-1", discovered_resources=[],
-        services=["lambda"], include_details=True,
-        include_cost_indicators=True, operation_guard=OperationGuard(deadline=0),
+        session,
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=["lambda"],
+        include_details=True,
+        include_cost_indicators=True,
+        operation_guard=OperationGuard(deadline=0),
     )
 
     assert result["coverage"]["timed_out"] == ["lambda"]
     assert result["errors"][0]["error_type"] == "inventory_timeout"
     client.list_functions.assert_not_called()
+
+
+def test_request_budget_preserves_partial_results_and_stops_new_calls() -> None:
+    client = Mock()
+    client.list_functions.return_value = {"Functions": []}
+    session = Mock()
+    session.client.return_value = client
+
+    result = adapter_engine.execute_adapters(
+        session,
+        account_id="account",
+        regions=["eu-west-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=["lambda", "ec2"],
+        include_details=True,
+        include_cost_indicators=True,
+        operation_guard=OperationGuard(max_requests=1),
+    )
+
+    assert result["coverage"]["executed"] == ["lambda"]
+    assert result["coverage"]["request_budget_exhausted"] == ["ec2"]
+    assert result["coverage"]["sdk_requests_executed"] == 1
+    client.describe_instances.assert_not_called()
 
 
 def test_regional_failure_keeps_successful_region_results(
@@ -298,18 +386,28 @@ def test_regional_failure_keeps_successful_region_results(
         region = context.regions[0]
         if region == "eu-central-1":
             raise PermissionError("denied")
-        return [make_resource(
-            service="regional", resource_type="AWS::regional::Resource",
-            region=region, source="regional_api", identifier=region,
-        )]
+        return [
+            make_resource(
+                service="regional",
+                resource_type="AWS::regional::Resource",
+                region=region,
+                source="regional_api",
+                identifier=region,
+            )
+        ]
 
     adapter.discover = discover  # type: ignore[method-assign]
     _install(monkeypatch, {"regional": adapter})
 
     result = adapter_engine.execute_adapters(
-        Mock(), account_id="account", regions=["eu-west-1", "eu-central-1"],
-        primary_region="eu-west-1", discovered_resources=[], services=None,
-        include_details=True, include_cost_indicators=True,
+        Mock(),
+        account_id="account",
+        regions=["eu-west-1", "eu-central-1"],
+        primary_region="eu-west-1",
+        discovered_resources=[],
+        services=None,
+        include_details=True,
+        include_cost_indicators=True,
         operation_guard=OperationGuard(),
     )
 

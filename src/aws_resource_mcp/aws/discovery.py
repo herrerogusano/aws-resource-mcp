@@ -13,9 +13,7 @@ def resource_identity(resource: dict[str, Any]) -> tuple[str, ...]:
     identifier = resource.get("id") or resource.get("identifier")
     if not identifier and isinstance(details, dict):
         identifier = (
-            details.get("Identifier")
-            or details.get("ResourceId")
-            or details.get("Id")
+            details.get("Identifier") or details.get("ResourceId") or details.get("Id")
         )
     resource_type = resource.get("resource_type")
     region = resource.get("region") or "global"
@@ -37,12 +35,15 @@ def merge_resources(
     """Merge duplicate general-discovery records without service preference."""
     merged = dict(current)
     for key, value in duplicate.items():
-        if key not in {"details", "properties", "sources", "cost_indicators"} and value not in (None, "", [], {}):
+        if key not in {
+            "details",
+            "properties",
+            "sources",
+            "cost_indicators",
+        } and value not in (None, "", [], {}):
             merged[key] = value
     merged["sources"] = list(
-        dict.fromkeys(
-            [*current.get("sources", []), *duplicate.get("sources", [])]
-        )
+        dict.fromkeys([*current.get("sources", []), *duplicate.get("sources", [])])
     )
     merged["details"] = {
         **current.get("details", current.get("properties", {})),
@@ -59,7 +60,10 @@ def merge_resources(
         *duplicate.get("cost_indicators", []),
     ]
     merged["cost_indicators"] = list(
-        {indicator.get("type", str(index)): indicator for index, indicator in enumerate(indicators)}.values()
+        {
+            indicator.get("type", str(index)): indicator
+            for index, indicator in enumerate(indicators)
+        }.values()
     )
     merged.pop("properties", None)
     return merged

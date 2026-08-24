@@ -89,6 +89,8 @@ def _inventory_status(inventory: dict[str, Any], pending: list[dict[str, Any]]) 
     adapter_coverage = inventory.get("coverage", {}).get("adapters", {})
     if adapter_coverage.get("timed_out"):
         return "partial_timeout"
+    if adapter_coverage.get("request_budget_exhausted"):
+        return "partial_request_budget_exhausted"
     if adapter_coverage.get("permission_denied"):
         return "partial_permission_denied"
     if any(
@@ -182,6 +184,7 @@ def _present_inventory(
         "potentially_billable_requests_executed": (
             authorization.requests_executed if authorization else 0
         ),
+        "sdk_requests_executed": adapter_coverage.get("sdk_requests_executed", 0),
         "consent_used": authorization is not None,
         "partial": status != "complete_for_requested_scope",
     }
@@ -189,7 +192,7 @@ def _present_inventory(
         "potentially_billable_unique_operations_executed"
     ]
     summary["billable_operations_executed"] = summary[
-        "potentially_billable_unique_operations_executed"
+        "potentially_billable_requests_executed"
     ]
     summary["adapters_executed"] = summary["services_checked"]
     summary["adapters_failed"] = summary["services_failed"]
@@ -411,9 +414,7 @@ def listar_recursos_aws(
             remaining.extend(adapter_coverage.get("pending_operations", []))
             remaining.extend(
                 item
-                for item in adapter_coverage.get(
-                    "enrichment_pending_operations", []
-                )
+                for item in adapter_coverage.get("enrichment_pending_operations", [])
                 if item["adapter"] not in truncated_adapters
             )
             new_record = None

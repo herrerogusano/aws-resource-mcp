@@ -1,7 +1,7 @@
 """Read-only AWS coverage diagnostics without resource inventory."""
 
 from collections.abc import Collection
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from aws_resource_mcp.aws.adapters.registry import get_adapters, validate_registry
@@ -352,7 +352,7 @@ def _activity_diagnostic(
     if cloudtrail_region:
         try:
             client = session.client("cloudtrail", region_name=cloudtrail_region)
-            now = datetime.now(timezone.utc)
+            now = datetime.now(UTC)
             guard.call(
                 client,
                 service="cloudtrail",

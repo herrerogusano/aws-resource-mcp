@@ -1,5 +1,22 @@
 # Decisiones
 
+## D-052 — Presupuesto global de peticiones
+
+**Decisión:** limitar cada inventario con `AWS_MCP_MAX_REQUESTS_PER_TOOL`,
+además del timeout existente, antes de cada llamada SDK.
+
+**Motivo:** los límites de paginación y consentimiento no bastan para impedir
+crecimiento de llamadas gratuitas en inventarios grandes. Al agotarse el
+presupuesto se conserva el resultado parcial y no se interpreta como vacío.
+
+## D-053 — Métrica SDK precisa en su alcance
+
+**Decisión:** llamar `sdk_requests_executed` a las invocaciones lógicas que
+pasan por el guard; documentar que no equivale necesariamente a intentos HTTP
+internos de botocore.
+
+**Motivo:** evita afirmar una precisión que la capa actual no puede observar.
+
 ## D-001 — Python y uv
 
 **Decisión:** usar Python 3.12 o posterior y `uv` para gestionar el proyecto y sus dependencias.

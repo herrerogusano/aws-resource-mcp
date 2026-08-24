@@ -1,11 +1,11 @@
 """Ephemeral, single-use consent records for bounded inventory completion."""
 
-from copy import deepcopy
-from dataclasses import dataclass, field
-from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import secrets
+from copy import deepcopy
+from dataclasses import dataclass, field
+from datetime import UTC, datetime, timedelta
 from threading import Lock
 from typing import Any
 
@@ -97,7 +97,7 @@ class InventoryConsentStore:
         consent_type: str = "inventory",
         now: datetime | None = None,
     ) -> ConsentRecord:
-        timestamp = now or datetime.now(timezone.utc)
+        timestamp = now or datetime.now(UTC)
         record = ConsentRecord(
             request_id=secrets.token_urlsafe(24),
             created_at=timestamp,
@@ -145,7 +145,7 @@ class InventoryConsentStore:
         *,
         now: datetime | None = None,
     ) -> ConsentRecord:
-        timestamp = now or datetime.now(timezone.utc)
+        timestamp = now or datetime.now(UTC)
         with self._lock:
             record = self._records.get(request_id)
             if record is None:
@@ -176,7 +176,7 @@ class InventoryConsentStore:
             return record
 
     def consume(self, request_id: str, *, now: datetime | None = None) -> None:
-        timestamp = now or datetime.now(timezone.utc)
+        timestamp = now or datetime.now(UTC)
         with self._lock:
             record = self._records.get(request_id)
             if record is None:
@@ -222,7 +222,7 @@ class InventoryConsentStore:
             self._audit_events.append(
                 {
                     "consent_id": anonymized_consent_id(request_id),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "result": "cancelled",
                     "requests_executed": 0,
                     "consumed": False,
@@ -236,7 +236,7 @@ class InventoryConsentStore:
             self._audit_events.append(
                 {
                     "consent_id": anonymized_consent_id(request_id),
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                     "result": "executed",
                     "operations": sorted(
                         f"{service}:{operation}"
@@ -269,7 +269,7 @@ class InventoryConsentStore:
             return deepcopy(self._audit_events)
 
     def pending_count(self, *, now: datetime | None = None) -> int:
-        timestamp = now or datetime.now(timezone.utc)
+        timestamp = now or datetime.now(UTC)
         with self._lock:
             for record in self._records.values():
                 if (

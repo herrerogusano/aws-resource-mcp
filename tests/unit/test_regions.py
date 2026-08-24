@@ -2,8 +2,8 @@
 
 from unittest.mock import Mock
 
-from botocore.exceptions import ClientError
 import pytest
+from botocore.exceptions import ClientError
 
 from aws_resource_mcp.aws.regions import enabled_region_names, list_aws_regions
 

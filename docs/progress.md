@@ -2,6 +2,9 @@
 
 ## Estado actual
 
+Fase 10 implementada: validación integral local de fiabilidad, seguridad,
+contratos y transporte MCP, sin llamadas AWS potencialmente facturables.
+
 Fase 9 implementada: IAM de mínimo privilegio derivado del registro real, con
 políticas deterministas, manifiesto auditable, validación negativa y montaje
 manual de una identidad dedicada.

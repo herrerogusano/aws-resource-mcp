@@ -20,3 +20,8 @@ build-backend = "uv_build"
 dev = [
     "pytest>=9.1.1",
 ]
+
+[tool.ruff.lint]
+# Boundary layers deliberately catch unknown AWS/SDK failures and translate them
+# to safe MCP responses; callers receive validation errors as ValueError.
+ignore = ["BLE001", "TRY004", "SIM102"]

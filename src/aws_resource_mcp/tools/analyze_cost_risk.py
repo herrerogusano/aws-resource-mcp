@@ -1,6 +1,6 @@
 """MCP tool for local potential-cost prioritization."""
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from aws_resource_mcp.economics.risk import analyze_resources, merge_activity
@@ -99,7 +99,7 @@ def analizar_riesgo_costes(
     free_tier = revisar_free_tier(services=services) if include_free_tier else None
     cost_consent = None
     if include_actual_cost:
-        end = datetime.now(timezone.utc).date()
+        end = datetime.now(UTC).date()
         start = end - timedelta(days=period_days)
         cost_consent = consultar_costes_aws(
             start_date=start.isoformat(),

@@ -27,11 +27,7 @@ from aws_resource_mcp.security.iam_policy_generator import (
 def _policy_actions(policy: dict[str, object]) -> list[str]:
     statements = policy["Statement"]
     assert isinstance(statements, list)
-    return [
-        action
-        for statement in statements
-        for action in statement["Action"]
-    ]
+    return [action for statement in statements for action in statement["Action"]]
 
 
 def test_checked_in_artifacts_are_current_and_json_serializable() -> None:
@@ -42,9 +38,7 @@ def test_checked_in_artifacts_are_current_and_json_serializable() -> None:
 
 def test_generator_is_deterministic(tmp_path: Path) -> None:
     first = generate_iam_artifacts(tmp_path)
-    snapshots = {
-        name: path.read_text(encoding="utf-8") for name, path in first.items()
-    }
+    snapshots = {name: path.read_text(encoding="utf-8") for name, path in first.items()}
     second = generate_iam_artifacts(tmp_path)
     assert snapshots == {
         name: path.read_text(encoding="utf-8") for name, path in second.items()
@@ -88,7 +82,9 @@ def test_consent_policy_does_not_bypass_application_consent() -> None:
     ]
     assert consented
     assert all(item["consent_required"] is True for item in consented)
-    assert all(item["cost_classification"] == "potentially_billable" for item in consented)
+    assert all(
+        item["cost_classification"] == "potentially_billable" for item in consented
+    )
 
 
 def test_manifest_covers_every_registered_operation_and_provenance() -> None:
@@ -125,8 +121,7 @@ def test_optional_region_constraint_only_affects_regional_statements() -> None:
     ]
     assert conditioned
     assert all(
-        statement["Condition"]["StringEquals"]["aws:RequestedRegion"]
-        == ["eu-west-1"]
+        statement["Condition"]["StringEquals"]["aws:RequestedRegion"] == ["eu-west-1"]
         for statement in conditioned
     )
     iam_statement = next(
