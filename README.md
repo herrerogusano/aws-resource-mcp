@@ -4,7 +4,7 @@ Servidor MCP local, desarrollado en Python, para consultar recursos reales de un
 
 ## Estado
 
-La fase 8 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad, diagnóstico explícito, análisis de riesgo económico, Free Tier gratuito y consultas de coste real con consentimiento puntual.
+La fase 9 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad, diagnóstico explícito, análisis económico y políticas IAM de mínimo privilegio generadas desde el registro real de operaciones.
 
 ## Alcance previsto
 
@@ -48,6 +48,18 @@ uv run mcp dev src/aws_resource_mcp/server.py
 ```powershell
 uv run pytest
 ```
+
+### Generar y validar las políticas IAM
+
+```powershell
+uv run aws-resource-mcp-generate-iam
+uv run aws-resource-mcp-generate-iam --check
+```
+
+La generación es local, determinista y no usa credenciales. El proyecto no
+crea ni modifica roles o políticas en AWS. Las políticas separan operaciones
+gratuitas, lecturas que requieren consentimiento y el máximo combinado; el
+permiso IAM nunca sustituye al consentimiento de la aplicación.
 
 ### Ejecutar el inventario AWS
 
@@ -205,3 +217,6 @@ Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista 
 - [Diagnóstico y cobertura](docs/diagnostics-and-coverage.md)
 - [Flujo de consentimiento del inventario](docs/inventory-consent-flow.md)
 - [Análisis económico, Free Tier y costes reales](docs/economic-analysis.md)
+- [IAM de mínimo privilegio](docs/iam-least-privilege.md)
+- [Matriz de permisos IAM](docs/iam-permissions-matrix.md)
+- [Configuración IAM manual](docs/iam-manual-setup.md)

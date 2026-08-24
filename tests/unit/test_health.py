@@ -119,6 +119,18 @@ def test_health_check_reports_dynamic_capabilities_and_zero_cost() -> None:
         "pending_consent_count": 0,
         "write_operations_enabled": False,
     }
+    assert result["iam"] == {
+        "policy_manifest_loaded": True,
+        "generated_policies_current": True,
+        "free_only_policy_generated": True,
+        "consented_policy_generated": True,
+        "stale_artifacts": [],
+        "local_validation": "passed",
+        "policy_validation": "local_passed",
+        "runtime_identity_dedicated": "unknown",
+        "managed_policy_audit": "not_checked",
+        "remote_validation_executed": False,
+    }
 
 
 def test_health_check_rejects_non_boolean_without_aws() -> None:

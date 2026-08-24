@@ -10,6 +10,7 @@ dependencies = [
 
 [project.scripts]
 aws-resource-mcp = "aws_resource_mcp.server:main"
+aws-resource-mcp-generate-iam = "aws_resource_mcp.security.iam_policy_generator:main"
 
 [build-system]
 requires = ["uv_build>=0.11.7,<0.12.0"]

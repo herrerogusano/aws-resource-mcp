@@ -1,0 +1,53 @@
+{
+  "Statement": [
+    {
+      "Action": [
+        "ce:GetCostAndUsage"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "CostExplorerConsentedCe01"
+    },
+    {
+      "Action": [
+        "s3:ListAllMyBuckets"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryS3S302"
+    },
+    {
+      "Action": [
+        "sns:ListSubscriptionsByTopic",
+        "sns:ListTopics"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoverySnsSns03"
+    },
+    {
+      "Action": [
+        "sqs:GetQueueAttributes",
+        "sqs:ListQueues"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoverySqsSqs04"
+    },
+    {
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:GetBucketLogging",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:GetBucketVersioning",
+        "s3:GetEncryptionConfiguration",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetReplicationConfiguration"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryEnrichmentS3S305"
+    }
+  ],
+  "Version": "2012-10-17"
+}

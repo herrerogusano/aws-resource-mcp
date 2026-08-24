@@ -2,9 +2,33 @@
 
 ## Estado actual
 
-Fase 8 implementada: análisis de riesgo potencial, Free Tier gratuito y coste real agregado mediante consentimiento puntual sin abandonar `free-only`.
+Fase 9 implementada: IAM de mínimo privilegio derivado del registro real, con
+políticas deterministas, manifiesto auditable, validación negativa y montaje
+manual de una identidad dedicada.
 
 ## Incluido
+
+- Metadatos IAM verificados para todas las operaciones registradas.
+- Políticas separadas `free-only`, `consented-readonly`, combinada y boundary opcional.
+- Manifiesto con capacidad, consumidor, alcance, coste, sensibilidad, dependencias, alternativas, exclusión, fecha y referencia.
+- Generador local `aws-resource-mcp-generate-iam` sin llamadas AWS.
+- Exclusión automática de escrituras, contenido sensible, acciones comodín, coste desconocido y riesgo alto.
+- Health y diagnóstico con estado local de políticas, sin inspeccionar IAM remoto.
+- Tests de sincronización, determinismo, alcance, consentimientos y ausencia de bypass del guard.
+- Guía de rol dedicado con credenciales temporales; ninguna modificación IAM ejecutada.
+
+## Comprobación manual de la fase 9
+
+Un cliente MCP nuevo por `stdio` registró las siete tools. `health_check` sin
+AWS confirmó manifiesto cargado, políticas sincronizadas y validación local
+correcta. El diagnóstico limitado a Lambda, S3 y EC2 en `eu-west-1` confirmó
+18 regiones habilitadas, acciones IAM por adaptador, Lambda y EC2 en
+`free-only`, y S3 pendiente de consentimiento. No ejecutó inventario de
+adaptadores, actividad, operaciones potencialmente facturables, escrituras ni
+llamadas IAM.
+
+Access Analyzer y el simulador no se ejecutaron porque su coste permanece sin
+verificar. No se creó ni adjuntó ninguna política.
 
 - Modelo económico común con riesgo, prioridad, coste real, Free Tier, evidencia, limitaciones y recomendaciones.
 - Tool `analizar_riesgo_costes`, que reutiliza inventario y actividad sin presentar indicadores como gasto confirmado.

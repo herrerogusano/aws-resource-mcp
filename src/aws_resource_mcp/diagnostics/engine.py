@@ -20,6 +20,7 @@ from aws_resource_mcp.aws.resource_explorer_inventory import (
 from aws_resource_mcp.aws.session import create_aws_session
 from aws_resource_mcp.config import AWSConfig
 from aws_resource_mcp.diagnostics.identity import anonymous_identity
+from aws_resource_mcp.security.iam_policy_generator import iam_health_metadata
 
 MAX_DIAGNOSTIC_REGIONS = 5
 
@@ -66,23 +67,42 @@ def _operation_diagnostic(
             "registered": False,
             "cost_classification": "unknown",
             "access": "unknown",
-            "status": "operation_not_registered",
+            "status": "operation_not_in_policy",
+            "iam_actions": [],
+            "capability": "unknown",
+            "policy_target": "excluded",
+            "consent_required": False,
+            "sensitive_data_risk": "unknown",
         }
-    try:
-        guard.require_allowed(service=service, operation=operation)
-        status = "not_checked" if not include_permissions else "operation_available"
-    except OperationBlockedError:
-        status = (
-            "operation_pending_consent"
-            if spec.cost_classification == "potentially_billable"
-            else "operation_not_registered"
-        )
+    if spec.access == "write":
+        status = "operation_excluded_write"
+    elif spec.sensitive_data_risk == "high":
+        status = "operation_excluded_sensitive"
+    elif spec.cost_classification == "unknown":
+        status = "operation_unknown"
+    elif spec.policy_target == "excluded":
+        status = "operation_not_in_policy"
+    else:
+        try:
+            guard.require_allowed(service=service, operation=operation)
+            status = "not_checked" if not include_permissions else "operation_available"
+        except OperationBlockedError:
+            status = (
+                "operation_pending_consent"
+                if spec.policy_target == "consented-readonly"
+                else "operation_not_in_policy"
+            )
     return {
         "operation": generic_name,
         "registered": True,
         "cost_classification": spec.cost_classification,
         "access": spec.access,
         "status": status,
+        "iam_actions": list(spec.iam_actions),
+        "capability": spec.capability,
+        "policy_target": spec.policy_target,
+        "consent_required": spec.consent_required,
+        "sensitive_data_risk": spec.sensitive_data_risk,
     }
 
 
@@ -113,7 +133,7 @@ def _adapter_diagnostics(
         unregistered = [
             item["operation"]
             for item in operations
-            if item["status"] == "operation_not_registered"
+            if item["status"] == "operation_not_in_policy"
         ]
         permitted = [
             item["operation"]
@@ -181,6 +201,16 @@ def _adapter_diagnostics(
                     ),
                 },
                 "required_operations": operations,
+                "required_iam_actions": sorted(
+                    {
+                        action
+                        for operation in operations
+                        for action in operation["iam_actions"]
+                    }
+                ),
+                "iam_policy_targets": sorted(
+                    {operation["policy_target"] for operation in operations}
+                ),
                 "permitted_operations": permitted,
                 "blocked_operations": blocked,
                 "permission_errors": [],
@@ -488,6 +518,7 @@ def collect_coverage_diagnostics(
             "checks": [],
             "errors": [],
         },
+        "iam": iam_health_metadata(),
         "cost_policy": cost_policy
         if include_cost_policy
         else {"status": "not_checked"},

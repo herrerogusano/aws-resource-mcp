@@ -281,3 +281,35 @@
 **Decisión:** puntuar cualquier recurso desde los mismos `cost_indicators` y el mismo estado de actividad, sin reglas directas para Lambda o S3.
 
 **Motivo:** preserva la arquitectura uniforme y permite explicar cada aumento de prioridad sin inventar gasto real.
+
+## D-048 — Registro de operaciones como fuente IAM
+
+**Decisión:** derivar el manifiesto y las políticas desde `OperationSpec`, con
+metadatos verificados por operación.
+
+**Motivo:** evita que código, guard y políticas diverjan silenciosamente.
+
+## D-049 — Separar IAM y consentimiento
+
+**Decisión:** generar una política para operaciones gratuitas y otra para
+lecturas potencialmente facturables; disponer del permiso no concede el grant
+efímero de aplicación.
+
+**Motivo:** IAM expresa el máximo técnico de la identidad, mientras el
+consentimiento limita cada ejecución concreta.
+
+## D-050 — Exclusiones negativas obligatorias
+
+**Decisión:** rechazar escrituras, acciones comodín, contenido sensible, coste
+desconocido y riesgo alto. Las acciones alternativas no se conceden.
+
+**Motivo:** una allowlist pequeña necesita también pruebas que impidan
+ampliaciones accidentales.
+
+## D-051 — IAM únicamente manual
+
+**Decisión:** documentar un rol dedicado y credenciales temporales, sin crear,
+adjuntar ni validar remotamente políticas desde el MCP.
+
+**Motivo:** la preparación de seguridad no debe otorgarse a sí misma autoridad
+para modificar la cuenta.

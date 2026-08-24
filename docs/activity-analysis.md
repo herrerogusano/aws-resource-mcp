@@ -124,3 +124,10 @@ La respuesta puede ser `unknown`; esa incertidumbre es parte deliberada del mode
 - [CloudTrail LookupEvents](https://docs.aws.amazon.com/awscloudtrail/latest/APIReference/API_LookupEvents.html)
 - [AWS CloudTrail pricing](https://aws.amazon.com/cloudtrail/pricing/)
 - [Amazon CloudWatch pricing](https://aws.amazon.com/cloudwatch/pricing/)
+## Permisos IAM
+
+Las señales gratuitas de los adaptadores y `cloudtrail:LookupEvents` aparecen
+en la política `free-only`. CloudWatch permanece excluido: ni una política IAM
+generada ni `include_paid_sources=true` autorizan métricas. Cualquier futura
+incorporación deberá verificar coste, sensibilidad y consentimiento antes de
+entrar en una política.

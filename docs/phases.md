@@ -42,7 +42,10 @@ Implementada. Añade un modelo económico uniforme, `analizar_riesgo_costes`, la
 
 ## Fase 9 — Seguridad e IAM de solo lectura
 
-Documentar y validar el modelo de mínimo privilegio, el uso seguro de credenciales externas y los límites de acceso.
+Implementada. Deriva permisos IAM desde el registro central, genera políticas
+separadas para `free-only`, consentimiento y uso combinado, valida exclusiones
+sensibles y documenta un rol dedicado con credenciales temporales. No modifica
+IAM automáticamente.
 
 ## Fase 10 — Tests y calidad
 

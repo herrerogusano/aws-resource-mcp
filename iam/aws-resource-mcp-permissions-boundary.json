@@ -1,0 +1,189 @@
+{
+  "Statement": [
+    {
+      "Action": [
+        "cloudtrail:LookupEvents"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "ActivityFreeCloudtrail01"
+    },
+    {
+      "Action": [
+        "ce:GetCostAndUsage"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "CostExplorerConsentedCe02"
+    },
+    {
+      "Action": [
+        "freetier:GetAccountPlanState",
+        "freetier:GetFreeTierUsage"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "FreeTierFreetier03"
+    },
+    {
+      "Action": [
+        "apigateway:GET"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryApigatewayApigateway04"
+    },
+    {
+      "Action": [
+        "cloudformation:ListStackResources",
+        "cloudformation:ListStacks"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryCloudformationCloudformation05"
+    },
+    {
+      "Action": [
+        "cloudfront:ListDistributions"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryCloudfrontCloudfront06"
+    },
+    {
+      "Action": [
+        "dynamodb:DescribeContinuousBackups",
+        "dynamodb:DescribeTable",
+        "dynamodb:ListTables"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryDynamodbDynamodb07"
+    },
+    {
+      "Action": [
+        "ec2:DescribeAddresses",
+        "ec2:DescribeInstances",
+        "ec2:DescribeInternetGateways",
+        "ec2:DescribeNatGateways",
+        "ec2:DescribeRouteTables",
+        "ec2:DescribeSubnets",
+        "ec2:DescribeVolumes",
+        "ec2:DescribeVpcEndpoints",
+        "ec2:DescribeVpcs"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryEc2Ec208"
+    },
+    {
+      "Action": [
+        "ecs:DescribeClusters",
+        "ecs:DescribeServices",
+        "ecs:DescribeTasks",
+        "ecs:ListClusters",
+        "ecs:ListServices",
+        "ecs:ListTasks"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryEcsEcs09"
+    },
+    {
+      "Action": [
+        "iam:ListPolicies",
+        "iam:ListRoles",
+        "iam:ListUsers"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryIamIam10"
+    },
+    {
+      "Action": [
+        "lambda:ListFunctions"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryLambdaLambda11"
+    },
+    {
+      "Action": [
+        "rds:DescribeDBClusters",
+        "rds:DescribeDBInstances",
+        "rds:DescribeDBSnapshots"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryRdsRds12"
+    },
+    {
+      "Action": [
+        "resource-explorer-2:ListIndexes",
+        "resource-explorer-2:ListSupportedResourceTypes",
+        "resource-explorer-2:ListViews",
+        "resource-explorer-2:Search"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryResourceExplorerResourceExplorer213"
+    },
+    {
+      "Action": [
+        "route53:ListHostedZones"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryRoute53Route5314"
+    },
+    {
+      "Action": [
+        "s3:ListAllMyBuckets"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoveryS3S315"
+    },
+    {
+      "Action": [
+        "sns:ListSubscriptionsByTopic",
+        "sns:ListTopics"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoverySnsSns16"
+    },
+    {
+      "Action": [
+        "sqs:GetQueueAttributes",
+        "sqs:ListQueues"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryDiscoverySqsSqs17"
+    },
+    {
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:GetBucketLogging",
+        "s3:GetBucketPublicAccessBlock",
+        "s3:GetBucketVersioning",
+        "s3:GetEncryptionConfiguration",
+        "s3:GetLifecycleConfiguration",
+        "s3:GetReplicationConfiguration"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "InventoryEnrichmentS3S318"
+    },
+    {
+      "Action": [
+        "ec2:DescribeRegions"
+      ],
+      "Effect": "Allow",
+      "Resource": "*",
+      "Sid": "RegionsEc219"
+    }
+  ],
+  "Version": "2012-10-17"
+}
