@@ -2,10 +2,10 @@
 
 ## Estado actual
 
-Fase 13 en cierre: checklist de release y demo reproducible completan la
+Fase 13 completada: el checklist de release y la demo reproducible cierran la
 primera versión junto con CI y la integración Codex.
 
-Fase 12 en preparación: GitHub Actions validará formato, lint, compilación,
+Fase 12 completada: GitHub Actions valida formato, lint, compilación,
 artefactos IAM y tests con dependencias bloqueadas, sin credenciales AWS.
 
 Fase 10 implementada: validación integral local de fiabilidad, seguridad,
@@ -93,7 +93,7 @@ uv run pytest -q
 uv run python -m compileall -q src
 ```
 
-226 tests pasan. No se conectan a AWS y cubren también salud, STS, anonimización, Resource Explorer, adaptadores, actividad, consentimiento, expiración, uso único, identidad, scope, límites, paginación, timeout, deduplicación, filtros, serialización, riesgo económico, Free Tier, Cost Explorer bloqueado/consentido y registro MCP.
+254 tests pasan. No se conectan a AWS y cubren también salud, STS, anonimización, Resource Explorer, adaptadores, actividad, consentimiento, expiración, uso único, identidad, scope, límites, paginación, timeout, deduplicación, filtros, serialización, riesgo económico, Free Tier, Cost Explorer bloqueado/consentido, registro MCP, contratos, seguridad, presupuesto de peticiones y CI.
 
 La comprobación manual anonimizada del 2026-07-23 ejecutó únicamente operaciones gratuitas. Free Tier devolvió un plan activo de tipo `paid`, 9 ofertas visibles y las 9 `within_limit`; se consultó una página completa con `GetAccountPlanState` y `GetFreeTierUsage`. Un análisis limitado a Lambda/EC2 en `eu-west-1` revisó 7 recursos: la muestra no contenía indicadores potenciales y quedó `none_detected`, que no equivale a coste cero. La primera llamada local de Cost Explorer produjo `pending_consent`, una petición máxima y 0,01 USD estimados. No se aprobó. Operaciones facturables ejecutadas: 0.
 
@@ -107,11 +107,10 @@ La comprobación real anonimizada del 2026-07-22 validó STS y analizó `eu-west
 
 No se guardaron identificadores, nombres de recursos, identidad AWS, IPs, access key IDs, parámetros de eventos ni payloads.
 
-## Pendiente
+## Pendiente opcional
 
 - Prueba real limitada de la segunda llamada, después de mostrar y recibir aprobación explícita para su alcance.
 - Consulta real de Cost Explorer únicamente si el usuario aprueba después el scope y el coste máximo mostrados.
-- Política IAM mínima formal, CI e integración final con cliente MCP en fases posteriores.
 - Una futura mejora con métricas funcionales requerirá consentimiento efímero limitado por operación, recursos, periodo y número de consultas.
 
 ## Bloqueos
