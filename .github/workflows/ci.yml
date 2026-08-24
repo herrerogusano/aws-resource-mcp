@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    name: Quality gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      AWS_EC2_METADATA_DISABLED: "true"
+      AWS_MCP_COST_MODE: free-only
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+
+      - name: Set up Python and install locked dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Verify formatting
+        run: uvx ruff format --check src tests
+
+      - name: Run lint
+        run: uvx ruff check src tests
+
+      - name: Compile source
+        run: uv run python -m compileall -q src
+
+      - name: Validate generated IAM artifacts
+        run: uv run aws-resource-mcp-generate-iam --check
+
+      - name: Run tests
+        run: uv run pytest -q

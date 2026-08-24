@@ -2,6 +2,9 @@
 
 ## Estado actual
 
+Fase 12 en preparación: GitHub Actions validará formato, lint, compilación,
+artefactos IAM y tests con dependencias bloqueadas, sin credenciales AWS.
+
 Fase 10 implementada: validación integral local de fiabilidad, seguridad,
 contratos y transporte MCP, sin llamadas AWS potencialmente facturables.
 
