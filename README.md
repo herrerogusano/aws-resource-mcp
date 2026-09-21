@@ -1,250 +1,143 @@
 # AWS Resource MCP
 
-Servidor MCP local, desarrollado en Python, para consultar recursos reales de una cuenta de AWS en modo de solo lectura.
+[![CI](https://github.com/herrerogusano/aws-resource-mcp/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/herrerogusano/aws-resource-mcp/actions/workflows/ci.yml)
 
-## Estado
+A local, read-only Model Context Protocol server that turns natural-language
+questions into bounded AWS inventory, activity, coverage, Free Tier, and cost
+risk analysis. It is written in Python, runs over `stdio`, and is designed for
+use with Codex or another compatible MCP client.
 
-La fase 9 está implementada. El servidor combina inventario uniforme, análisis conservador de actividad, diagnóstico explícito, análisis económico y políticas IAM de mínimo privilegio generadas desde el registro real de operaciones.
+The project favors honest partial results over false certainty: missing
+permissions, incomplete regional coverage, timeouts, and unavailable signals
+remain explicit in every response.
 
-## Alcance previsto
+## What it does
 
-- Transporte MCP local mediante `stdio`.
-- Región principal: `eu-west-1`.
-- Consultas de AWS exclusivamente de lectura y bajo mínimo privilegio.
-- Tools disponibles: `health_check()`, `listar_recursos_aws()`, `analizar_actividad_recursos()`, `diagnosticar_cobertura_aws()`, `analizar_riesgo_costes()`, `revisar_free_tier()` y `consultar_costes_aws()`.
-- Cost Explorer está bloqueado hasta recibir consentimiento efímero para una petición exacta.
-- Sin despliegue en AWS ni CD.
+| MCP tool | Purpose |
+| --- | --- |
+| `health_check` | Validate local configuration and optional AWS identity access |
+| `listar_recursos_aws` | Build a normalized, deduplicated resource inventory |
+| `analizar_actividad_recursos` | Classify the best-known activity signal without equating configuration changes with usage |
+| `diagnosticar_cobertura_aws` | Explain which services, regions, permissions, and data sources are actually available |
+| `analizar_riesgo_costes` | Prioritize resources using explainable indicators without claiming actual spend |
+| `revisar_free_tier` | Read account plan and Free Tier usage through registered operations |
+| `consultar_costes_aws` | Prepare and, only after exact consent, execute one bounded Cost Explorer request |
 
-## Fiabilidad
+## Architecture
 
-La fase 10 incorpora pruebas locales de integración, contrato, seguridad,
-rendimiento y protocolo MCP. El inventario aplica además
-`AWS_MCP_MAX_REQUESTS_PER_TOOL` (250 por defecto) antes de cada llamada SDK;
-cuando se agota conserva el resultado y devuelve
-`partial_request_budget_exhausted`.
-
-La integración continua ejecuta en cada pull request el formato, lint,
-compilación, validación determinista de IAM y tests locales. No configura
-credenciales AWS ni ejecuta operaciones AWS.
-
-## Using with Codex
-
-Codex is the primary client. Use the package entry point `uv run aws-resource-mcp`
-over `stdio`, configure any AWS profile outside the repository, and begin with
-natural-language questions such as “What resources do I have in eu-west-1?”.
-When a response is `partial_pending_consent`, Codex must explain the exact
-operation and wait for explicit approval; it never creates persistent consent.
-See [Codex integration](docs/codex-integration.md) and the [demo](docs/demo.md).
-
-## Release v0.1.0
-
-La primera versión está lista para revisión: incluye guard de solo lectura,
-consentimiento efímero, integración con Codex y CI. Consulta el
-[checklist de release](docs/release-checklist.md) para verificarla localmente
-y ejecutar la demo segura.
-
-## Desarrollo
-
-El proyecto se gestiona con `uv` y Python 3.12 o posterior.
-
-### Instalar dependencias
-
-```powershell
-uv sync
+```mermaid
+flowchart LR
+    U["User"] --> C["Codex / MCP client"]
+    C -->|"stdio"| M["AWS Resource MCP"]
+    M --> V["Input validation"]
+    V --> G["Read and cost policy guard"]
+    G --> R["Operation registry"]
+    R --> A["Service adapters"]
+    A --> B["Boto3 / AWS APIs"]
+    A --> N["Normalized resource model"]
+    N --> X["Coverage, activity, and risk analysis"]
+    X --> C
+    P["Ephemeral exact consent"] -. required for potentially billable reads .-> G
 ```
 
-### Ejecutar el servidor
+AWS credentials and profiles remain outside the repository. The server uses
+Boto3's standard credential chain and never creates, modifies, or deletes AWS
+resources.
+
+## Safety model
+
+- Read-only operations only; writes and unknown operations fail closed.
+- `free-only` is the default economic policy.
+- Potentially billable reads require short-lived consent for an exact operation
+  and payload; a boolean parameter alone cannot grant it.
+- Time, page, request, result, and regional budgets are enforced before SDK
+  calls.
+- Account identifiers, ARNs, tags, and provider errors are sanitized according
+  to the tool contract.
+- Empty output never means “the account is empty” unless the requested scope was
+  actually queried completely.
+- CI uses no AWS credentials and makes no live AWS request.
+
+## Example interaction
+
+```text
+User: Which resources in eu-west-1 could generate costs?
+
+Codex calls:
+  listar_recursos_aws(region="eu-west-1", include_cost_indicators=true)
+  analizar_riesgo_costes(regions=["eu-west-1"])
+
+Result:
+  status: complete_for_requested_scope
+  risk: medium
+  evidence: configuration-based indicators only
+  actual spend queried: no
+  next step: review the named resource types or explicitly request a bounded
+             Cost Explorer query
+```
+
+The example is synthetic and contains no account data. See the
+[safe demo](docs/demo.md) for a repeatable walkthrough.
+
+## Quick start
+
+Requirements: Python 3.12+ and [uv](https://docs.astral.sh/uv/).
 
 ```powershell
+uv sync --locked --all-groups
 uv run aws-resource-mcp
 ```
 
-Para diagnóstico también puede ejecutarse como módulo:
+The repository includes an optional Codex MCP configuration in
+`.codex/config.toml`. Configure the AWS profile outside the repository, then ask
+questions such as:
+
+- “What resources do I have in `eu-west-1`?”
+- “Which resources have no known recent activity?”
+- “What parts of the account could not be inspected?”
+- “Which resources have cost indicators without querying actual spend?”
+
+When a response is `partial_pending_consent`, the client should explain the
+exact pending operations and wait for the user. See the
+[Codex integration guide](docs/codex-integration.md).
+
+## Quality gates
 
 ```powershell
-uv run python -m aws_resource_mcp.server
-```
-
-El servidor utiliza `stdio`: espera que un cliente MCP intercambie mensajes por la entrada y salida estándar. Puede abrirse con MCP Inspector mediante las herramientas incluidas en el SDK:
-
-```powershell
-uv run mcp dev src/aws_resource_mcp/server.py
-```
-
-### Ejecutar los tests
-
-```powershell
-uv run pytest
-```
-
-### Generar y validar las políticas IAM
-
-```powershell
-uv run aws-resource-mcp-generate-iam
+uv run ruff format --check src tests
+uv run ruff check src tests
+uv run python -m compileall -q src
 uv run aws-resource-mcp-generate-iam --check
+uv run pytest -q
 ```
 
-La generación es local, determinista y no usa credenciales. El proyecto no
-crea ni modifica roles o políticas en AWS. Las políticas separan operaciones
-gratuitas, lecturas que requieren consentimiento y el máximo combinado; el
-permiso IAM nunca sustituye al consentimiento de la aplicación.
+The IAM generator derives deterministic policy artifacts from the same central
+operation registry used at runtime. Generated artifacts are checked in CI so
+the documented permissions cannot silently drift from reachable operations.
 
-### Ejecutar el inventario AWS
+## Coverage and limitations
 
-Antes del diagnóstico real, comprueba qué identidad resolverá la configuración local:
+- Resource Explorer provides broad discovery but is not universal or strongly
+  consistent.
+- Service adapters cover Lambda, S3, EC2/EBS/VPC, RDS/Aurora, DynamoDB,
+  ECS/Fargate, API Gateway, CloudFormation, SQS, SNS, IAM, CloudFront, and Route
+  53 with service-specific limits.
+- CloudTrail management history is bounded to its available lookback and is not
+  equivalent to functional application usage.
+- CloudWatch metric reads remain blocked under the default cost policy.
+- Cost Explorer forecasting and resource-level cost queries are intentionally
+  not implemented.
+- This is a local analysis tool, not a hosted multi-user service or an automated
+  remediation system.
 
-```powershell
-aws sts get-caller-identity
-```
+## Documentation
 
-Después, ejecuta el inventario en la región predeterminada `eu-west-1`:
-
-```powershell
-uv run python -m aws_resource_mcp.aws.inventory
-```
-
-La región y el perfil compartido son opcionales:
-
-```powershell
-uv run python -m aws_resource_mcp.aws.inventory --region eu-central-1 --profile example
-```
-
-No se guardan claves en el proyecto. Boto3 usa su cadena estándar de resolución de credenciales; si se indica `AWS_PROFILE` o `--profile`, solo se selecciona un perfil que ya debe existir fuera del repositorio.
-
-## Tools MCP
-
-### `health_check`
-
-`health_check(check_aws=True)` separa la salud local de la accesibilidad de AWS. Sin argumentos realiza como máximo una llamada protegida a STS; con `check_aws=false` no usa red. Devuelve versión, transporte, tools y adaptadores registrados, región, política económica y cero operaciones facturables. Sus estados son:
-
-- `ok`: servidor y configuración válidos; STS respondió cuando se solicitó.
-- `degraded`: el servidor funciona, pero faltan credenciales o STS no es accesible.
-- `error`: la configuración segura o los registros internos no pueden inicializarse.
-
-La identidad se anonimiza: solo se conserva el tipo general de principal y, cuando existe, una cuenta enmascarada. No ejecuta inventario, Resource Explorer, adaptadores, CloudTrail ni CloudWatch.
-
-### `listar_recursos_aws`
-
-Consulta el inventario AWS disponible para las credenciales locales sin modificar recursos. Parámetros:
-
-- `region`: limita la búsqueda a una región; sin valor utiliza toda la cobertura disponible.
-- `services`: filtra por servicios como `lambda`, `s3`, `ec2` o `rds`.
-- `include_account_id`: permite omitir el ID de cuenta de la respuesta para facilitar su anonimización.
-- `resource_types`: filtra por tipos dinámicos como `ec2:instance`.
-- `query`: busca por texto o nombre.
-- `all_regions`: utiliza las regiones habilitadas cuando no se especifica `region`.
-- `include_details`: incluye metadatos específicos dentro de `details`.
-- `include_cost_indicators`: incluye señales potenciales de coste sin afirmar gasto real.
-- `confirm_potentially_billable_operations`: parámetro heredado que ya no concede permisos.
-- `include_activity_summary`: añade un resumen breve usando solo campos ya obtenidos; no consulta CloudTrail ni CloudWatch.
-- `consent_request_id`, `consent_action` y `approved_services`: reanudan o cancelan una solicitud efímera y acotada.
-- `timeout_seconds`: presupuesto configurable entre 1 y 120 segundos.
-
-Ejemplo de argumentos enviados por un cliente MCP:
-
-```json
-{
-  "region": "eu-west-1",
-  "services": ["lambda", "s3"],
-  "include_account_id": false,
-  "all_regions": true
-}
-```
-
-La primera llamada devuelve los recursos obtenidos mediante operaciones permitidas. Si para completar S3, SQS o SNS hacen falta operaciones contabilizables, devuelve `partial_pending_consent`, `pending_operations` y una solicitud que expira en cinco minutos. No ejecuta esas operaciones hasta una segunda llamada explícita:
-
-```json
-{
-  "consent_request_id": "<id devuelto por la primera llamada>",
-  "consent_action": "approve",
-  "approved_services": ["s3"]
-}
-```
-
-La aprobación es de un solo uso, queda ligada a la identidad y al alcance originales, y limita operaciones, regiones y peticiones. Descubrimiento y enriquecimiento se autorizan por separado; una página adicional necesita una nueva solicitud. `consent_action: "cancel"` no ejecuta inventario AWS.
-
-Los estados distinguen `complete_for_requested_scope`, `partial_pending_consent`, `partial_timeout`, `partial_permission_denied`, `partial_unavailable`, `consent_cancelled` y `error`. Una lista vacía solo significa que el servicio está vacío cuando fue consultado.
-
-`resources`, `all_resources` y `resources_by_service` representan el mismo inventario deduplicado. Cada recurso contiene `id`, `arn`, `name`, `service`, `resource_type`, `region`, `account_id`, `state`, `created_at`, `sources`, `details`, `cost_indicators` y `activity`. La tool no calcula costes, no consulta Free Tier y no realiza operaciones de escritura.
-
-### `analizar_actividad_recursos`
-
-Analiza el último indicio conocido mediante el mismo registro y modelo para todos los recursos. Acepta filtros por `services`, `regions` y `resource_ids`, además de `inactive_days`, `lookback_days`, `include_administrative_events` y límites configurables. El historial de CloudTrail se limita a 90 días y se consulta por región, no una vez por recurso.
-
-La respuesta separa `last_functional_usage_at`, `last_administrative_activity_at`, `last_configuration_change_at` y `last_state_change_at`. `best_known_activity_at` siempre indica también el tipo de señal. Un estado activo, una consulta `Describe*` o una fecha de modificación no se presentan como uso funcional.
-
-Los estados por recurso son `active`, `inactive_candidate`, `unknown`, `not_supported` o `error`. Un candidato inactivo es únicamente un elemento para revisar: requiere antigüedad suficiente, una fuente relevante consultada y ausencia de evidencia reciente contradictoria. Falta de permisos, fuentes insuficientes o relaciones ambiguas producen `unknown`, no una falsa certeza de inactividad.
-
-CloudWatch podría aportar métricas funcionales, pero `GetMetricData`, `GetMetricStatistics` y `ListMetrics` están registrados como potencialmente facturables y bloqueados. `include_paid_sources=true` solo solicita la explicación estructurada; no constituye consentimiento y nunca ejecuta esas operaciones en esta fase.
-
-### `diagnosticar_cobertura_aws`
-
-Explica qué puede consultar realmente el MCP sin enumerar recursos. Acepta filtros `services` y `regions`, y permite omitir las secciones de permisos, actividad o política económica.
-
-Comprueba STS, regiones habilitadas, índices existentes de Resource Explorer, registro y capacidades de adaptadores, fuentes gratuitas de actividad y operaciones bloqueadas. Las comprobaciones se limitan a cinco regiones por ejecución, una muestra de CloudTrail y ninguna llamada de CloudWatch.
-
-Los estados de cobertura distinguen `available`, `partial`, `unavailable`, `not_configured`, `permission_denied`, `blocked_by_cost_policy`, `not_supported`, `not_checked` y `error`. Una operación declarada como permitida por la política no se presenta como permiso IAM demostrado: el diagnóstico no ejecuta inventarios de servicio para probarlo.
-
-Ejemplo:
-
-```json
-{
-  "services": ["ec2", "rds"],
-  "regions": ["eu-west-1"],
-  "include_activity_sources": true
-}
-```
-
-Las limitaciones indican impacto, si el MCP puede continuar, si faltan permisos, si resolverlas exigiría escritura y si podría existir coste. El diagnóstico nunca realiza la acción sugerida.
-
-### `analizar_riesgo_costes`
-
-Prioriza recursos mediante los indicadores del inventario y, opcionalmente, el pipeline común de actividad. Devuelve `none_detected`, `low`, `medium`, `high`, `critical` o `unknown`, una puntuación explicable y recomendaciones no ejecutables. Una señal no confirma gasto y `none_detected` no significa coste cero.
-
-`include_free_tier=true` añade datos oficiales de Free Tier. `include_actual_cost=true` solo prepara un consentimiento de Cost Explorer: no realiza la consulta.
-
-### `revisar_free_tier`
-
-Consulta `GetFreeTierUsage` y `GetAccountPlanState`, operaciones que AWS documenta sin coste. Separa límites mensuales, previsión, plan y créditos. Puede devolver información parcial o desconocida por permisos, retraso de actualización, agotamiento de una oferta o diferencias de elegibilidad. No afirma que un recurso concreto sea gratuito.
-
-### `consultar_costes_aws`
-
-Prepara una consulta agregada `GetCostAndUsage` para un periodo y filtros exactos. La primera llamada ejecuta cero operaciones AWS y devuelve una solicitud efímera con el precio publicado de 0,01 USD por petición sobre la vista principal. Una segunda llamada con `consent_action="approve"` ejecuta como máximo una página; cada página adicional exige un consentimiento nuevo. `cancel` no llama a AWS.
-
-La granularidad puede ser `MONTHLY` o `DAILY`; `end_date` es exclusiva. Forecast, detalle por recurso, linked accounts y billing views personalizadas no se implementan en esta fase.
-
-## Inventario AWS
-
-Boto3 es el SDK oficial de AWS para Python. La capa de inventario utiliza:
-
-- STS `GetCallerIdentity` para identificar la cuenta y la identidad efectiva.
-- EC2 `DescribeRegions` para descubrir únicamente regiones habilitadas.
-- Resource Explorer para descubrir dinámicamente recursos y tipos soportados mediante índices y vistas existentes.
-- Un registro común de adaptadores para Lambda, S3, EC2/EBS/VPC, RDS/Aurora, DynamoDB, ECS/Fargate, API Gateway, CloudFormation, SQS, SNS, IAM, CloudFront y Route 53.
-- CloudTrail `LookupEvents` para el historial regional gratuito de eventos de administración de los últimos 90 días.
-
-Lambda y S3 fueron los primeros servicios implementados, pero ya no conservan rutas arquitectónicas especiales. Todos los adaptadores declaran metadatos, operaciones Boto3, alcance, tipos, detalles e indicadores mediante el mismo contrato. Los detalles particulares viven únicamente dentro de `details`.
-
-Los resultados se deduplican por ARN o, si falta, por tipo, región e identificador/nombre. Se prefiere un índice agregador; con índices locales se combinan resultados y la cobertura es parcial. Si Resource Explorer no está disponible, se ejecutan todos los adaptadores seleccionados que soportan descubrimiento.
-
-La ausencia de credenciales o la imposibilidad de identificar la cuenta es un error global para inventario, pero solo un estado `degraded` para la salud local. El diagnóstico conserva sus comprobaciones locales y omite de forma segura las dependientes de AWS.
-
-Todas las llamadas Boto3 pasan primero por un registro central. Las operaciones no registradas, de escritura o de coste desconocido se bloquean. El modo `free-only` permanece activo durante todo el proceso. S3, SQS y SNS pueden contabilizar peticiones: sus enumeraciones se presentan como pendientes y solo un grant efímero exacto permite ejecutarlas. El guard cuenta por separado operaciones únicas y peticiones reales.
-
-Ejemplos para un cliente MCP: “¿Qué recursos hay en mi cuenta?”, “Lista las instancias EC2 de eu-west-1”, “Busca recursos llamados web” o “Muéstrame los tipos RDS desplegados”. Resource Explorer ofrece cobertura amplia, no universal.
-
-## Documentación
-
-- [Arquitectura](docs/architecture.md)
-- [Decisiones](docs/decisions.md)
-- [Fases](docs/phases.md)
-- [Progreso](docs/progress.md)
-- [Política zero-cost](docs/zero-cost-policy.md)
-- [Adaptadores de servicios](docs/service-adapters.md)
-- [Análisis de actividad](docs/activity-analysis.md)
-- [Diagnóstico y cobertura](docs/diagnostics-and-coverage.md)
-- [Flujo de consentimiento del inventario](docs/inventory-consent-flow.md)
-- [Análisis económico, Free Tier y costes reales](docs/economic-analysis.md)
-- [IAM de mínimo privilegio](docs/iam-least-privilege.md)
-- [Matriz de permisos IAM](docs/iam-permissions-matrix.md)
-- [Configuración IAM manual](docs/iam-manual-setup.md)
+- [Architecture](docs/architecture.md)
+- [Safe demo](docs/demo.md)
+- [Service adapters](docs/service-adapters.md)
+- [Coverage diagnostics](docs/diagnostics-and-coverage.md)
+- [Activity analysis](docs/activity-analysis.md)
+- [Economic analysis and consent](docs/economic-analysis.md)
+- [Least-privilege IAM](docs/iam-least-privilege.md)
+- [Zero-cost policy](docs/zero-cost-policy.md)
+- [Design decisions](docs/decisions.md)
